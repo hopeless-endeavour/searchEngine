@@ -3,6 +3,7 @@ from flask_bootstrap import Bootstrap
 from flask import current_app as app
 
 from .models import db, Article
+from .forms import QueryForm
 
 
 @app.route('/')

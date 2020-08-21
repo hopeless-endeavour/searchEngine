@@ -3,10 +3,21 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h1>French Search Engine</h1>
 
-<div class="container">
-
-
+<div class="view">
+  <div class="search-box">
+    <h2>French Search Engine</h2>
+    <form class="d-flex justify-content-center">
+      <div class="flex-fill form-group">
+        <div class="query input-group">
+          <input type="text" name="query" class="form-control" placeholder="Search...">
+        </div>
+      </div>
+      <div>
+      <button class="btn btn-outline-light search-btn" type="submit"><i class="fa fa-search"></i></button>
+      </div>
+    </form>
+  </div>
 </div>
+
 {% endblock %}

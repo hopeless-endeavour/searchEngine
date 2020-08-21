@@ -15,6 +15,7 @@ il
 je
 la
 le
+les
 leur
 lui
 ma
@@ -57,6 +58,7 @@ d
 j
 l
 à
+e
 a
 m
 n
@@ -152,6 +154,7 @@ ceci
 celà
 cet
 cette
+ça
 ici
 ils
 les
@@ -162,3 +165,4 @@ quelle
 quelles
 sans
 soi
+si
