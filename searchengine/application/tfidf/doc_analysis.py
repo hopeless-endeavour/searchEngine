@@ -7,7 +7,7 @@ from collections import Counter
 
 
 def removeStopwords(text):
-    with open("stop_words.txt", "r", encoding="utf-8") as f:
+    with open("application/stop_words.txt", "r", encoding="utf-8") as f:
         stop_words = f.read().split("\n")[:-1]
 
     new_text = []
@@ -92,7 +92,7 @@ def cos_sim(vec1, vec2):
     cos = np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2))
     return cos
 
-def calc_query_vec(query, vocab):
+def calc_query_vec(query, vocab, clean_corpus):
 
     Q = [0] * len(vocab)
 
@@ -120,10 +120,10 @@ def calc_query_vec(query, vocab):
             pass
     return Q
 
-def calc_cos_sim(query, vocab, tfidf):
+def calc_cos_sim(query, vocab, tfidf, clean_corpus):
 
     clean_query = preProcess(query)
-    query_vec = calc_query_vec(clean_query, vocab)
+    query_vec = calc_query_vec(clean_query, vocab, clean_corpus)
     d_cosines = []
 
     for vec in tfidf:
@@ -134,33 +134,73 @@ def calc_cos_sim(query, vocab, tfidf):
     return out, d_cosines
 
 
-corpus = []
+def readData(path):
 
-# read in all json files
-# combine all data into single dict
-for i in os.listdir(path='data'):
-    with open(f'data/{i}','r', encoding="utf8") as f:
-        full_data = f.read()
-        json_obj = json.loads(full_data)
+    corpus = []
 
-        if json_obj['text'] != " ":
-            corpus.append(json_obj['text'])
+    for i in os.listdir(path=path):
+        with open(f'{path}/{i}','r', encoding="utf8") as f:
+            full_data = f.read()
+            json_obj = json.loads(full_data)
+
+            if json_obj['text'] != " ":
+                corpus.append(json_obj['text'])
+
+    return corpus
+
+def tf_idf(query, corpus, num=1):
+
+    clean_corpus = [preProcess(i) for i in corpus]
+    vocab = get_vocab(clean_corpus)
+    tf_vec = []
+
+    for i in clean_corpus:
+        tf_vec.append(calcTF(i,vocab))
+
+    tf_vec = np.array(tf_vec)
+    idf_vec = idf(clean_corpus, vocab)
+
+    diag_idf = np.diag(idf_vec)
+    tf_idf = np.matmul(tf_vec, diag_idf)
+    norm_tfidf = []
+    for i in tf_idf:
+        norm_tfidf.append(i/np.linalg.norm(i,2))
+
+    results = calc_cos_sim(query, vocab, norm_tfidf, clean_corpus)[0][:num]
+
+    top_texts = [corpus[i] for i in results ]
+
+    result_dict = dict(zip(results,top_texts))
+
+    return top_texts
+
+# corpus = []
+#
+# # read in all json files
+# # combine all data into single dict
+# for i in os.listdir(path='data'):
+#     with open(f'data/{i}','r', encoding="utf8") as f:
+#         full_data = f.read()
+#         json_obj = json.loads(full_data)
+#
+#         if json_obj['text'] != " ":
+#             corpus.append(json_obj['text'])
 
 # for i, text in enumerate(data['text']):
 #     data['text'][i] = preProcess(text)
 
 
-clean_corpus = [preProcess(i) for i in corpus]
-vocab = get_vocab(clean_corpus)
-tf_vec = []
-for i in clean_corpus:
-    tf_vec.append(calcTF(i,vocab))
-
-tf_vec = np.array(tf_vec)
-idf_vec = idf(clean_corpus, vocab)
-
-diag_idf = np.diag(idf_vec)
-tf_idf = np.matmul(tf_vec, diag_idf)
-norm_tfidf = []
-for i in tf_idf:
-    norm_tfidf.append(i/np.linalg.norm(i,2))
+# clean_corpus = [preProcess(i) for i in corpus]
+# vocab = get_vocab(clean_corpus)
+# tf_vec = []
+# for i in clean_corpus:
+#     tf_vec.append(calcTF(i,vocab))
+#
+# tf_vec = np.array(tf_vec)
+# idf_vec = idf(clean_corpus, vocab)
+#
+# diag_idf = np.diag(idf_vec)
+# tf_idf = np.matmul(tf_vec, diag_idf)
+# norm_tfidf = []
+# for i in tf_idf:
+#     norm_tfidf.append(i/np.linalg.norm(i,2))

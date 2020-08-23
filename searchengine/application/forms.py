@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, RadioField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms.validators import InputRequired, Length, EqualTo, ValidationError
 
@@ -26,7 +26,7 @@ class LoginForm(FlaskForm):
     username = StringField('username_label',
         validators=[InputRequired(message="Username required")])
     password = PasswordField('password_label',
-        validators=[InputRequired(message="Password required"), invalid_creds])
+        validators=[InputRequired(message="Password required")])
     submit_button = SubmitField('Submit')
 
 class QueryForm(FlaskForm):
