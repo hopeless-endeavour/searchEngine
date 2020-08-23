@@ -1,7 +1,7 @@
 # FERB - French Education Resource Browser
 Search Engine for French articles/websites/blogs etc.
 
-![screenshot](/static/img/Screenshot_2020-08-23 Home.png)
+![screenshot](Screenshot_2020-08-23 Home.png)
 
 
 ## Set UP
