@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+
+<div class="view">
+  <div class="search-box">
+    <h2>Register</h2>
+    <form name="query-form" method="post" >
+      <div class="form-group">
+        <div class="input-group">
+          <input type="text" name='username' class="form-control" placeholder="Username" required>
+        </div>
+        <div class="input-group">
+          <input type="text" name='password' class="form-control" placeholder="Password" required>
+        </div>
+        <div>
+        <button class="btn btn-outline-light search-btn" type="submit">Register</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{% endblock %}

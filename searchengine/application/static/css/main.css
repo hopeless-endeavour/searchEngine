@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap');
 
 body{
+  font-family: 'Montserrat', sans-serif;
   height: 100%;
   width: 100%;
   background: url('/static/img/bg_img.jpg') no-repeat center center fixed;
@@ -9,20 +11,53 @@ body{
 h2 {
   text-align: center;
   color: white;
+  font-weight: 500;
 }
 
-.search-box{
-  position: absolute;
+p {
+  font-size: small;
+}
+
+.search-box .results-box{
   top: 30%;
   width: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
-.form-group {
+.search-box {
+  margin-top: 20px;
+}
+
+.card {
+  margin-top: 10px;
+  width: 60%;
+  left: 20%;
+}
+
+.card-link {
+  font-size: small;
+  color: blue !important;
+  font-style: italic;
+}
+
+/*
+.results-box {
+  position: fixed;
+  top: 30%;
+  width: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+} */
+.query-form {
   display: flex;
   justify-content: center;
 }
 
 .input-group {
   width: 50%;
+}
+
+.auth{
+  display: flex;
+  flex-direction: column;
 }

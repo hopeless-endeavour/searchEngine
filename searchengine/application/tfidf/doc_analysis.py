@@ -144,13 +144,14 @@ def readData(path):
             json_obj = json.loads(full_data)
 
             if json_obj['text'] != " ":
-                corpus.append(json_obj['text'])
+                corpus.append([json_obj['title'], json_obj['text'], json_obj['url']])
 
     return corpus
 
 def tf_idf(query, corpus, num=1):
 
-    clean_corpus = [preProcess(i) for i in corpus]
+    texts = [corpus[i][1] for i in range(len(corpus))]
+    clean_corpus = [preProcess(i) for i in texts]
     vocab = get_vocab(clean_corpus)
     tf_vec = []
 
@@ -168,7 +169,13 @@ def tf_idf(query, corpus, num=1):
 
     results = calc_cos_sim(query, vocab, norm_tfidf, clean_corpus)[0][:num]
 
-    top_texts = [corpus[i] for i in results ]
+    top_texts = []
+    for i in results:
+        result = {}
+        result['title'] = corpus[i][0]
+        result['text'] = corpus[i][1][:200]
+        result['url'] = corpus[i][2]
+        top_texts.append(result)
 
     result_dict = dict(zip(results,top_texts))
 
