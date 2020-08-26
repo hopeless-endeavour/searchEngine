@@ -21,7 +21,7 @@
             <li class="nav-item active">
               <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
             </li>
-            {% if not g.user %}
+            {% if not session['user_id'] %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('register') }}">Register</a>
             </li>
@@ -29,7 +29,7 @@
               <a class="nav-link" href="{{ url_for('login') }}">Login</a>
             </li>
             {% endif %}
-            {% if g.user %}
+            {% if session['user_id'] %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
             </li>
@@ -40,6 +40,16 @@
           </ul>
         </div>
     </nav>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-warning alert-dismissible" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+          {{message}}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
     {% block content %}
     {% endblock %}
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>

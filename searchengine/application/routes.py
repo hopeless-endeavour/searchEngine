@@ -1,19 +1,9 @@
-from flask import Flask, render_template, jsonify, request, make_response, redirect, g, url_for, session
+from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash
 from flask import current_app as app
 import json
 
 from application.tfidf.doc_analysis import *
 from .models import db, Article, User
-# from .forms import QueryForm
-
-
-@app.before_request
-def before_request():
-    g.user = None
-
-    if 'user_id' in session:
-        user = User.query.filter_by(username=session['user_id']).first()
-        g.user = user
 
 
 @app.route('/', methods=['post', 'get'])
@@ -35,7 +25,8 @@ def register():
 
         user_obj = User.query.filter_by(username=username).first()
         if user_obj:
-            return "Username taken"
+            flash("Username taken")
+            return redirect(url_for('register'))
         else:
             user = User(username=username, password=password)
             db.session.add(user)
@@ -59,18 +50,26 @@ def login():
         user_obj = User.query.filter_by(username=username).first()
         if user_obj:
             session['user_id'] = user_obj.id
+            print(session)
             return redirect(url_for('profile'))
+        else:
+            flash("User does not exist")
 
-        return redirect(url_for('login'))
 
     return render_template('login.html')
 
+
 @app.route('/profile', methods=['post', 'get'])
 def profile():
-    # if not g.user:
-    #     return redirect(url_for('login'))
 
-    return render_template('profile.html')
+    if session.get('user_id', None) is not None:
+        user_id = session['user_id']
+        user = User.query.filter_by(id=user_id).first()
+        return render_template('profile.html', user=user)
+    else:
+        flash("No username found in session")
+        return redirect(url_for("login"))
+
 
 
 @app.route('/logout', methods=['post', 'get'])

@@ -1,5 +1,3 @@
-
-
 {% extends "layout.html" %}
 
 {% block title %}Profile{% endblock %}
@@ -8,8 +6,13 @@
 
 <div class="view">
   <div class="search-box">
-    <h2 class="title">{{g.user.username}}'s Profile</h2>
-    <h2 class="subtitle">You are user number #{{g.user.id}}</h2>
+    <h2 class="title">{{user.username}}'s Profile</h2>
+    <h2 class="subtitle">You are user number #{{user.id}}</h2>
+    <h3>File Upload</h3>
+    <form method="POST" action="" enctype="multipart/form-data">
+      <p><input type="file" name="file"></p>
+      <p><input type="submit" value="Submit"></p>
+    </form>
   </div>
 </div>
 
