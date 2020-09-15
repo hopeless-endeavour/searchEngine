@@ -6,6 +6,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(25), nullable=False)
     password = db.Column(db.String(25), nullable=False)
+    img = db.Column(db.String(25), default='default.jpg')
 
 
 class Article(db.Model):

@@ -80,6 +80,29 @@ def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/_upload', methods=['post', 'get'])
+def upload():
+
+    #TODO: set max image upload size 
+    if request.method == 'POST':
+        user_id = session['user_id']
+        user = User.query.filter_by(id=user_id).first()
+        f = request.files['file']  
+        filename = f'{user_id}{os.path.splitext(f.filename)[1]}'
+        user.img = filename
+        f.save(f"/application/static/img/{filename}")  
+        print(filename)
+
+        return redirect(url_for('profile'))
+
+    if request.method == 'GET':
+        if session.get('user_id'):
+            img = User.query.filter_by(id=session['user_id']).first().img 
+        else:
+            img = 'default.jpg'
+
+        return make_response(jsonify(img), 200)
+
 @app.route('/_background', methods=['post', 'get'])
 def background():
 

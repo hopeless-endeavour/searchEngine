@@ -58,8 +58,20 @@ function loadResults(){
   });
 }
 
+function setBackground(){
+  fetch(`${window.origin}/_upload`)
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+    document.body.style.backgroundImage = data;
+  })  
+}
+
 
 $(function(){
+
+  setBackground();
+
   $("#submit-btn").bind('click', (event) => {
     loadResults();
     return false;

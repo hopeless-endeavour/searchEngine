@@ -4,6 +4,7 @@ import json
 import math
 import numpy as np
 from collections import Counter
+import requests
 
 
 def removeStopwords(text):
@@ -148,6 +149,13 @@ def readData(path):
 
     return corpus
 
+def checkUrl(url):
+    req = requests.head(url)
+    if req.status_code != 200:
+        return (f'Error. Status code: {req.status_code}')
+    else:
+        return True
+
 def tf_idf(query, corpus, num=1):
 
     texts = [corpus[i][1] for i in range(len(corpus))]
@@ -181,33 +189,3 @@ def tf_idf(query, corpus, num=1):
 
     return top_texts
 
-# corpus = []
-#
-# # read in all json files
-# # combine all data into single dict
-# for i in os.listdir(path='data'):
-#     with open(f'data/{i}','r', encoding="utf8") as f:
-#         full_data = f.read()
-#         json_obj = json.loads(full_data)
-#
-#         if json_obj['text'] != " ":
-#             corpus.append(json_obj['text'])
-
-# for i, text in enumerate(data['text']):
-#     data['text'][i] = preProcess(text)
-
-
-# clean_corpus = [preProcess(i) for i in corpus]
-# vocab = get_vocab(clean_corpus)
-# tf_vec = []
-# for i in clean_corpus:
-#     tf_vec.append(calcTF(i,vocab))
-#
-# tf_vec = np.array(tf_vec)
-# idf_vec = idf(clean_corpus, vocab)
-#
-# diag_idf = np.diag(idf_vec)
-# tf_idf = np.matmul(tf_vec, diag_idf)
-# norm_tfidf = []
-# for i in tf_idf:
-#     norm_tfidf.append(i/np.linalg.norm(i,2))
