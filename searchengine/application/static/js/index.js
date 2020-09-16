@@ -63,7 +63,7 @@ function setBackground(){
   .then(response => response.json())
   .then(data => {
     console.log(data);
-    document.body.style.backgroundImage = data;
+    document.body.style.backgroundImage = `url(${data})`;
   })  
 }
 

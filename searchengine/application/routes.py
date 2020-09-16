@@ -100,7 +100,7 @@ def upload():
         if session.get('user_id'):
             img = User.query.filter_by(id=session['user_id']).first().img 
         else:
-            img = 'default.jpg'
+            img = 'static/img/default.jpg'
 
         return make_response(jsonify(img), 200)
 
