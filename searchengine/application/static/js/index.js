@@ -9,7 +9,7 @@ function addHtmlResults(results){
     return `
     <div class="card"><div class="card-body">
         <h5 class="card-title">${result.title}</h5>
-        <a href="#" class="card-link card-subtitle text-muted">${result.url}</a>
+        <a href="${result.url}" class="card-link card-subtitle text-muted">${result.url}</a>
         <p class="card-text">${result.text}</p></div>
     </div>
     `;
