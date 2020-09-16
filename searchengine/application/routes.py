@@ -76,6 +76,7 @@ def profile():
 def logout():
 
     session.pop('user_id', None)
+    flash("Logged Out")
 
     return redirect(url_for('index'))
 
