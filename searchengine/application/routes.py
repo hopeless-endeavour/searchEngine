@@ -49,11 +49,15 @@ def login():
 
         user_obj = User.query.filter_by(username=username).first()
         if user_obj:
-            session['user_id'] = user_obj.id
-            print(session)
-            return redirect(url_for('profile'))
+            if user_obj.password == password:
+                session['user_id'] = user_obj.id
+                print(session)
+                return redirect(url_for('profile'))
+            else:
+                flash("Password is incorrect")
         else:
             flash("User does not exist")
+
 
 
     return render_template('login.html')
@@ -98,7 +102,7 @@ def upload():
 
     if request.method == 'GET':
         if session.get('user_id'):
-            img = User.query.filter_by(id=session['user_id']).first().img 
+            img = f"static/img/{User.query.filter_by(id=session['user_id']).first().img}"
         else:
             img = 'static/img/default.jpg'
 
@@ -116,3 +120,17 @@ def background():
     res = make_response(jsonify(results), 200)
 
     return res
+
+
+@app.route('/uploadtoDB')
+def uploadtoDB():
+
+    corpus = readData('application/data')
+    for i in range(len(corpus)): 
+        article = Article(title=corpus[i][0], text=corpus[i][1], url=corpus[i][2])
+        db.session.add(article)
+    
+    flash('success')
+    db.session.commit() 
+    
+    return redirect(url_for('index'))

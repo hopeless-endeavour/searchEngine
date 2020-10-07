@@ -7,6 +7,30 @@ from collections import Counter
 import requests
 
 
+def checkUrl(url):
+    req = requests.head(url)
+    if req.status_code != 200:
+        return (f'Error. Status code: {req.status_code}')
+    else:
+        return True
+
+
+def readData(path):
+    """ Returns 2D array as [[title, text, url], [title2, text2, url2]]"""
+
+    corpus = []
+
+    for i in os.listdir(path=path):
+        with open(f'{path}/{i}','r', encoding="utf8") as f:
+            full_data = f.read()
+            json_obj = json.loads(full_data)
+        
+            if (json_obj['text'] != " ") :
+                corpus.append([json_obj['title'], json_obj['text'], json_obj['url']])
+
+    return corpus
+
+
 def removeStopwords(text):
     with open("application/stop_words.txt", "r", encoding="utf-8") as f:
         stop_words = f.read().split("\n")[:-1]
@@ -35,7 +59,7 @@ def preProcess(text):
 
 def get_vocab(data):
     """ Takes corpus where each document is a list of all their words.
-        Returns a vocab dict of the whole corpus. """
+        Returns a unique vocab dict of the whole corpus. """
 
     unique_words = set()
     vocab = {}
@@ -134,27 +158,6 @@ def calc_cos_sim(query, vocab, tfidf, clean_corpus):
 
     return out, d_cosines
 
-
-def readData(path):
-
-    corpus = []
-
-    for i in os.listdir(path=path):
-        with open(f'{path}/{i}','r', encoding="utf8") as f:
-            full_data = f.read()
-            json_obj = json.loads(full_data)
-
-            if json_obj['text'] != " ":
-                corpus.append([json_obj['title'], json_obj['text'], json_obj['url']])
-
-    return corpus
-
-def checkUrl(url):
-    req = requests.head(url)
-    if req.status_code != 200:
-        return (f'Error. Status code: {req.status_code}')
-    else:
-        return True
 
 def tf_idf(query, corpus, num=1):
 

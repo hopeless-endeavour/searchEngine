@@ -6,7 +6,7 @@
 
 <div class="view">
   <div class="search-box">
-    <h2 class="title">{{user.username}}'s Profile</h2>
+    <h2 class="title">{{user.username | upper}}'s Profile</h2>
     <h2 class="subtitle">You are user number #{{user.id}}</h2>
     <h3>File Upload</h3>
     <form method="POST" action="" enctype="multipart/form-data">

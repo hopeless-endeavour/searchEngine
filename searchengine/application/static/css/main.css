@@ -18,6 +18,11 @@ p {
   font-size: small;
 }
 
+/* #logo{
+  height: 3rem;
+  width: 8rem;
+} */
+
 .search-box {
   top: 30%;
   margin-top: 20px;
