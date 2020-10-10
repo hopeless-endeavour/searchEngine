@@ -7,10 +7,15 @@ function addHtmlResults(results){
   }
   var htmltoAppend = results.map((result) => {
     return `
-    <div class="card"><div class="card-body">
-        <h5 class="card-title">${result.title}</h5>
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title d-flex flex-row">
+        <h5>${result.title}</h5>
+        <button id="bookmark-btn" class="btn bookmark-btn ml-auto" type="submit" onclick="bookmark()"><i class="fa fa-bookmark-o"></i></button>
+        </div>
         <a href="${result.url}" class="card-link card-subtitle text-muted">${result.url}</a>
-        <p class="card-text">${result.text}</p></div>
+        <p class="card-text">${result.text}</p>
+      </div>
     </div>
     `;
   }).join('');
@@ -32,7 +37,6 @@ function loadResults(){
       n: n.value
   };
 
-  // document.getElementById("submit-btn").disabled = true;
 
   fetch(`${window.origin}/_background`, {
     method: "POST",
@@ -43,19 +47,19 @@ function loadResults(){
       "content-type": "application/json"
     })
   })
-  .then(function(response) {
-    if (response.status !== 200) {
-      console.log(`Error. Status code: ${response.status}`);
-      return;
-    }
-    response.json().then(function(data) {
-      console.log(data);
-      addHtmlResults(data)
+  .then((response) => {
+      if (response.status !== 200) {
+        console.log(`Error. Status code: ${response.status}`);
+        return;
+      }
+      response.json().then(function (data) {
+        console.log(data);
+        addHtmlResults(data);
+      });
+    })
+  .catch((error) => {
+      console.log("Fetch error: " + error);
     });
-  })
-  .catch(function(error) {
-    console.log("Fetch error: " + error);
-  });
 }
 
 function setBackground(){
@@ -68,12 +72,30 @@ function setBackground(){
 }
 
 
+function bookmark(){
+  console.log("bookmarked");
+  var el = $("#bookmark-btn").children('i');
+  if(el.hasClass("fa-bookmark-o")){
+    // get article title/id 
+    // fetch request to _bookmark 
+    // check if user logged in on backend 
+    // if logged in change icon
+    // add user id and article id to linked table in db
+    // else flash that user must log in to bookmark 
+
+     el.addClass("fa-bookmark").removeClass("fa-bookmark-o");
+  } else{
+    // remove article from users bookmarked pages 
+    el.addClass("fa-bookmark-o").removeClass("fa-bookmark");
+  };
+}
+
 $(function(){
 
   setBackground();
 
-  $("#submit-btn").bind('click', (event) => {
+  $("#submit-btn").on('click', () => {
     loadResults();
     return false;
-  });
+    });
 });

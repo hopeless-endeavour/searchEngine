@@ -32,7 +32,7 @@ def readData(path):
 
 
 def removeStopwords(text):
-    with open("application/stop_words.txt", "r", encoding="utf-8") as f:
+    with open("application/tfidf/stop_words.txt", "r", encoding="utf-8") as f:
         stop_words = f.read().split("\n")[:-1]
 
     new_text = []
@@ -50,7 +50,7 @@ def preProcess(text):
     text = text.lower()
     text = re.sub('[%s]' % re.escape(punctuation), '', text)
     text = re.sub('\w*\d\w*', '', text)
-    text =  re.sub("'", ' ', text) # replaces ' with space
+    text = re.sub("'", ' ', text) # replaces ' with space
     text = re.sub('\n', '', text)
     text = text.split()
     text = removeStopwords(text)
@@ -92,12 +92,12 @@ def calcTF(doc, vocab):
     return tf
 
 
-def calcIDF(data, df):
-    idf = {}
-    for word in df:
-        idf[word] = math.log(len(data['text']) / df[word])
+# def calcIDF(data, df):
+#     idf = {}
+#     for word in df:
+#         idf[word] = math.log(len(data['text']) / df[word])
 
-    return idf
+#     return idf
 
 def idf(corpus, vocab):
 

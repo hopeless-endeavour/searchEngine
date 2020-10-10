@@ -121,6 +121,10 @@ def background():
 
     return res
 
+@app.route('/_bookmarkPage', methods =['post'])
+def bookmarkPage():
+
+    return 'heh'
 
 @app.route('/uploadtoDB')
 def uploadtoDB():

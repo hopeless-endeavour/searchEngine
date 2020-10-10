@@ -34,6 +34,12 @@ p {
   left: 20%;
 }
 
+.card-title{
+  display: flex;
+  flex-direction: row;
+}
+
+
 .card-link {
   font-size: small;
   color: blue !important;
@@ -63,4 +69,5 @@ p {
   margin-left: 2px;
 }
 
-/* TODO: center align .auth-btn */
+/* TODO: center align .auth-btn 
+/* TODO: style bookmark button, increase size, move up 
