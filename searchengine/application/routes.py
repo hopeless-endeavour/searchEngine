@@ -75,6 +75,12 @@ def profile():
         return redirect(url_for("login"))
 
 
+@app.route('/viewArticle', methods=['post', 'get'])
+def viewArticle():
+
+
+	return render_template('viewArticle.html')
+    
 
 @app.route('/logout', methods=['post', 'get'])
 def logout():

@@ -85,9 +85,9 @@ def calcTF(doc, vocab):
             if term == value:
                 tf[key] += 1
 
-    # calcs tf for each word
-    # for i in tf:
-    #     tf[i] = tf[i] / len(text)
+    calcs tf for each word
+    for i in tf:
+        tf[i] = tf[i] / len(text)
 
     return tf
 

@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}View Article{% endblock %}
+
+{% block content %}
+
+<div class="view">
+    <div class="card">
+        <div class="card-body">
+          <div class="card-title d-flex flex-row">
+          <h5>Title</h5>
+          <button id="bookmark-btn" class="btn bookmark-btn ml-auto" type="submit" onclick=""><i class="fa fa-bookmark-o"></i></button>
+          </div>
+          <a href="${result.url}" class="card-link card-subtitle text-muted">url</a>
+          <p class="card-text">text</p>
+        </div>
+      </div>
+</div>
+
+
+{% endblock %}
