@@ -1,6 +1,5 @@
 import re
 import math
-import numpy as np
 from collections import Counter
 
 text = "Le gouvernement va pouvoir continuer de mettre en place des restrictions pour faire face à la deuxième vague de coronavirus. Dans une ambiance souvent tendue, l’Assemblée nationale a voté samedi la prorogation de l’état d’urgence sanitaire jusqu’au 16 février. Le projet de loi, voté par 71 voix contre 35 en première lecture, est attendu au Sénat mercredi et devrait être adopté définitivement début novembre."
@@ -24,7 +23,7 @@ class Corpus():
     def add_document(self, name, text):
         
         new_doc = Document(name, text)
-        self.documents[self.num_docs] = new_doc
+        self.documents[self.num_docs] = new_doc # using num_docs as id for new doc
         self.update_vocab(self.num_docs)
         self.num_docs += 1
         
@@ -39,14 +38,10 @@ class Corpus():
         self.len_vocab = len(self.vocab)
         
 
-    def calc_tf(self, doc, vocab=None):
+    def calc_tf(self, doc):
         
-        if vocab == None:
-            vocab = self.vocab
-        else:
-            vocab = vocab
-        tf = [0] * len(vocab)
-        for index, token in enumerate(vocab):
+        tf = [0] * self.len_vocab
+        for index, token in enumerate(self.vocab):
             for j in doc.tokens:
                 if j == token:
                     tf[index] += 1
@@ -141,6 +136,7 @@ class Corpus():
         result = self.compare_tfidfs(q_tfidf)
         
         return sorted(result, reverse=True)
+   
         
 class Document():
     
@@ -179,5 +175,5 @@ class Query(Document):
         super().__init__(title=None, raw_text=query)
 
 c = Corpus()
-c.add_document('one',text)
-c.add_document('two',text2)
+c.add_document('one', text)
+c.add_document('two', text2)
