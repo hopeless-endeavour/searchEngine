@@ -78,8 +78,8 @@ def profile():
 @app.route('/viewArticle', methods=['post', 'get'])
 def viewArticle():
 
-
-	return render_template('viewArticle.html')
+    article = Article.query.filter_by(id=13).first()
+    return render_template('viewArticle.html', article=article)
     
 
 @app.route('/logout', methods=['post', 'get'])
@@ -127,7 +127,7 @@ def background():
 
     return res
 
-@app.route('/_bookmarkPage', methods =['post'])
+@app.route('/_bookmarkPage', methods = ['post'])
 def bookmarkPage():
 
     return 'heh'
@@ -137,10 +137,10 @@ def uploadtoDB():
 
     corpus = readData('application/data')
     for i in range(len(corpus)): 
-        article = Article(title=corpus[i][0], text=corpus[i][1], url=corpus[i][2])
+        article = Article(title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4])
         db.session.add(article)
     
     flash('success')
-    db.session.commit() 
+    db.session.commit()  
     
-    return redirect(url_for('index'))
+    return redirect(url_for('index'))    

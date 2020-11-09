@@ -28,17 +28,30 @@ p {
   margin-top: 20px;
 }
 
+#view-article {
+  margin-top: 20px;
+  width: 80%;
+  left: 10%
+}
+
+#view-article .card-text{
+  font-size: medium;
+}
+
 .card {
   margin-top: 10px;
   width: 60%;
   left: 20%;
 }
 
+.card-text{
+  margin-top: 10px;
+}
+
 .card-title{
   display: flex;
   flex-direction: row;
 }
-
 
 .card-link {
   font-size: small;

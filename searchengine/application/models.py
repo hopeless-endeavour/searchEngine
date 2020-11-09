@@ -18,9 +18,9 @@ class Article(db.Model):
     title = db.Column(db.String, nullable=False)
     text = db.Column(db.String, nullable=False)
     author = db.Column(db.String, nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
+    published = db.Column(db.DateTime, nullable=False)
     url = db.Column(db.String, unique=True, nullable=False)
-    cefr = db.Column(db.String, nullable=False)
+    cefr = db.Column(db.String, default=None)
 
     users = db.relationship('User', secondary='user_article')
 

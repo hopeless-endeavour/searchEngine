@@ -174,6 +174,9 @@ class Query(Document):
     def __init__(self, query):
         super().__init__(title=None, raw_text=query)
 
+    def spell_check(self):
+        pass
+
 c = Corpus()
 c.add_document('one', text)
 c.add_document('two', text2)

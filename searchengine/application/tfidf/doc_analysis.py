@@ -2,6 +2,7 @@ import os
 import re
 import json
 import math
+import datetime
 import numpy as np
 from collections import Counter
 import requests
@@ -16,7 +17,7 @@ def checkUrl(url):
 
 
 def readData(path):
-    """ Returns 2D array as [[title, text, url], [title2, text2, url2]]"""
+    """ Returns 2D array as [[title, text, author, published, url], [title2, text2, author2, published2, url2]]"""
 
     corpus = []
 
@@ -26,7 +27,7 @@ def readData(path):
             json_obj = json.loads(full_data)
         
             if (json_obj['text'] != " ") :
-                corpus.append([json_obj['title'], json_obj['text'], json_obj['url']])
+                corpus.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
 
     return corpus
 
@@ -84,10 +85,10 @@ def calcTF(doc, vocab):
         for term in doc:
             if term == value:
                 tf[key] += 1
-
-    calcs tf for each word
-    for i in tf:
-        tf[i] = tf[i] / len(text)
+                
+    # calcs tf for each word
+    for i in range(len(tf)):
+        tf[i] = tf[i] / len(doc)
 
     return tf
 
@@ -185,7 +186,7 @@ def tf_idf(query, corpus, num=1):
         result = {}
         result['title'] = corpus[i][0]
         result['text'] = corpus[i][1][:200]
-        result['url'] = corpus[i][2]
+        result['url'] = corpus[i][4]
         top_texts.append(result)
 
     result_dict = dict(zip(results,top_texts))

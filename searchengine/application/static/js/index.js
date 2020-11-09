@@ -98,4 +98,5 @@ $(function(){
     loadResults();
     return false;
     });
+
 });
