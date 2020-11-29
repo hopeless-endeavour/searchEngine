@@ -94,6 +94,14 @@ $(function(){
 
   setBackground();
 
+  $('.input-daterange').datepicker({
+    format: 'dd-mm-yyyy',
+    autoclose: true,
+    calendarWeeks : true,
+    clearBtn: true,
+    disableTouchKeyboard: true
+    });
+    
   $("#submit-btn").on('click', () => {
     loadResults();
     return false;
