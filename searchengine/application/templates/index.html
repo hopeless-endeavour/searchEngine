@@ -14,6 +14,7 @@
         </div>
         <div class="form-group">
           <select class="form-control custom-select" id="n-select">
+            <option hidden >Number of returns</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -22,6 +23,7 @@
           </select>
         <div class="form-group">
           <select class="form-control custom-select" id="cefr-level">
+            <option disabled hidden selected>Select level</option>
             <option value="A1">A1</option>
             <option value="A2">A2</option>
             <option value="B1">B1</option>
@@ -30,7 +32,7 @@
             <option value="C2">C2</option>
           </select>
         </div>
-        <div class="input-group input-daterange"> <input type="text" id="start" class="form-control text-left mr-2"> <label class="ml-3 form-control-placeholder" id="start-p" for="start">Start Date</label> <span class="fa fa-calendar" id="fa-1"></span> <input type="text" id="end" class="form-control text-left ml-2"> <label class="ml-3 form-control-placeholder" id="end-p" for="end">End Date</label> <span class="fa fa-calendar" id="fa-2"></span> </div>
+        <div class="form-group input-daterange"> <input type="text" id="start" class="form-control"> <label class="form-control-placeholder" id="start-p" for="start">Start Date</label> <span class="fa fa-calendar" id="fa-1"></span> <input type="text" id="end" class="form-control"> <label class="form-control-placeholder" id="end-p" for="end">End Date</label> <span class="fa fa-calendar" id="fa-2"></span> </div>
         <div>
         <button id="submit-btn" class="btn btn-outline-light search-btn" type="submit"><i class="fa fa-search"></i></button>
         </div>
@@ -39,6 +41,5 @@
   </div>
   <div id="results-box"></div>
 </div>
-
 
 {% endblock %}

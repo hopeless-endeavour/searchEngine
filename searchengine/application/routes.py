@@ -78,7 +78,7 @@ def profile():
 @app.route('/viewArticle', methods=['post', 'get'])
 def viewArticle():
 
-    article = Article.query.filter_by(id=13).first()
+    article = Article.query.filter_by(id=25).first()
     return render_template('viewArticle.html', article=article)
     
 
