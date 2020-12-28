@@ -1,3 +1,8 @@
+from requests import get
+from contextlib import closing 
+from requests.exceptions import RequestException
+from bs4 import BeautifulSoup as bs
+
 class Node:
     def __init__(self, id, label, **kwargs):
         self.id = id 
@@ -69,10 +74,49 @@ class Graph:
             print("A node doesn't exist")
 
 
+def simple_get(url):
+    """Attempts to get content of url using get and returns content if successful, else returns none."""
 
-def scrapeUrl(url):
+    try:
+        with closing(get(url, stream=True)) as resp:
+            if is_good_response(resp):
+                return resp.content
+            else:
+                return None
+    except RequestException as e:
+        print("Error during requests to {0} : {1}".format(url, str(e)))
+        return None
+
+
+def is_good_response(resp):
+    """Returns true if response is html."""
+    content_type = resp.headers["Content-Type"].lower()
+    return (resp.status_code == 200
+            and content_type is not None
+            and content_type.find("html") > -1)
+
+
+def scrape_url(url):
     """ Takes url, scrapes website, returns dict {url: {"state": "white", "content": "article text", links: [url1, url2, url3] }} where links is a list of all other articles the url points to """ 
-    return web[url]           
+
+    #TODO: scrape date of publication too 
+
+    content = simple_get(url)
+    soup = bs(content, "html.parser")
+    title = soup.find("h1", class_="nodeheader-title").text
+    text = ''
+
+    for i in soup.find('div', class_='content').find_all('p'):
+        text += i.text
+
+    links = []
+    for i in soup.find("ul", class_="block-list").find_all('a'):
+        links.append(i.get("href"))
+
+    urlDict = {"title": title, "state": "white", "content": text, "links": links}
+
+    return urlDict
+
 
 def bfs(corpus, seedUrl, depth):
     queue = []
@@ -88,9 +132,8 @@ def bfs(corpus, seedUrl, depth):
             # move item at beginning of queue into currentNode 
             currentNode = queue.pop(0) 
             # scrape the currentNode url to get it's data and links 
-            urlDict = scrapeUrl(currentNode)
+            urlDict = scrape_url(currentNode)
             graphAdj[currentNode] = urlDict
-            print(graphAdj)
             # add the currentNode data to the corpus class/graph
             corpus.addNode(len(corpus.nodes), "DOC", raw_text=urlDict['content'])
             # append the currentNode to visited list after data has been collected 
@@ -121,6 +164,6 @@ web = {
         }
 
 G = Graph()
-visited = bfs(G, 'A', 8)
+visited = bfs(G, 'https://www.20minutes.fr/sport/2940007-20201226-coronavirus-joueurs-wolverhampton-interdits-faire-courses-supermarche', 5)
 
 # change bfs function to be recursive instead of while loop??
