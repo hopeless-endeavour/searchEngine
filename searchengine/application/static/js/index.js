@@ -6,15 +6,16 @@ function addHtmlResults(results){
     bootbox.alert("No results found.")
   }
   var htmltoAppend = results.map((result) => {
+   
     return `
     <div class="card">
       <div class="card-body">
         <div class="card-title d-flex flex-row">
         <h5>${result.title}</h5>
-        <button id="bookmark-btn" class="btn bookmark-btn ml-auto" type="submit" onclick="bookmark()"><i class="fa fa-bookmark-o"></i></button>
+        <button id="${result.id}" class="btn bookmark-btn ml-auto" type="submit" onclick="bookmark(${result.id})"><i class="fa fa-bookmark-o"></i></button>
         </div>
         <a href="${result.url}" class="card-link card-subtitle text-muted">${result.url}</a>
-        <p class="card-text">${result.text}</p>
+        <p class="card-text">${result.text}...</p>
       </div>
     </div>
     `;
@@ -72,11 +73,10 @@ function setBackground(){
 }
 
 
-function bookmark(){
+function bookmark(id){
   console.log("bookmarked");
-  var el = $("#bookmark-btn").children('i');
+  var el = document.getElementById(id);
   if(el.hasClass("fa-bookmark-o")){
-    // get article title/id 
     // fetch request to _bookmark 
     // check if user logged in on backend 
     // if logged in change icon
@@ -86,6 +86,7 @@ function bookmark(){
      el.addClass("fa-bookmark").removeClass("fa-bookmark-o");
   } else{
     // remove article from users bookmarked pages 
+    // remove user article link
     el.addClass("fa-bookmark-o").removeClass("fa-bookmark");
   };
 }

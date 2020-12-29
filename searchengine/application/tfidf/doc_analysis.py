@@ -26,7 +26,7 @@ def readData(path):
             full_data = f.read()
             json_obj = json.loads(full_data)
         
-            if (json_obj['text'] != " ") :
+            if (json_obj['text'] != " "):
                 corpus.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
 
     return corpus
@@ -185,7 +185,7 @@ def tf_idf(query, corpus, num=1):
     for i in results:
         result = {}
         result['title'] = corpus[i][0]
-        result['text'] = corpus[i][1][:200]
+        result['text'] = corpus[i][1]
         result['url'] = corpus[i][4]
         top_texts.append(result)
 

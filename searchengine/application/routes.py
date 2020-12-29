@@ -1,9 +1,44 @@
-from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash
+from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g
 from flask import current_app as app
 import json
 
 from application.tfidf.doc_analysis import *
 from .models import db, Article, User
+from application.tfidf.classes import Corpus, Query
+
+C = Corpus()
+
+@app.before_first_request
+def before_first_request():
+    data = readData(('application/data'))
+    articles = Article.query.all()
+    for i in articles:
+        C.add_document(i.id, i.title, i.text)
+    
+    with open('data_file.json', 'r') as f:
+        json_data = json.load(f)
+        C.num_docs = json_data["num_docs"]
+        C.vocab = json_data["Vocab"]
+        C.len_vocab = json_data["len_vocab"]
+        C.tf_matrix = json_data["tf_matric"]
+        C.df_vec = json_data["df_vec"]
+        C.idf_vec = json_data["idf_vec"]
+        C.tf_idf = json_data["tf_idf"]
+    
+    print(C.num_docs)
+    
+
+    # C.calc_tfidf()
+    # print(C.len_vocab)
+    # res = C.search_query("macron")
+    # print(res)
+    
+    # json_data = {"num_docs": C.num_docs, "Vocab": C.vocab, "len_vocab": C.len_vocab, "tf_matrix": C.tf_matrix, "df_vec": C.df_vec, "idf_vec": C.idf_vec, "tf_idf": C.tf_idf}
+    
+    # with open('data_file.json', 'w') as f:
+    #     json.dump(json_data, f)
+        
+    
 
 
 @app.route('/', methods=['post', 'get'])
@@ -120,10 +155,21 @@ def background():
     req = request.get_json()
     print(req)
 
-    corpus = readData('application/data')
-    results = tf_idf(req['query'], corpus, int(req['n']))
+    # corpus = readData('application/data')
+    # results = tf_idf(req['query'], corpus, int(req['n']))
+    doc_ids = C.search_query(req['query'])[:int(req['n'])]
+    res = []
+    for i in doc_ids:
+        doc = {}
+        doc_obj = Article.query.filter_by(id=i).first()
+        doc['id'] = doc_obj.id
+        doc['title'] = doc_obj.title
+        doc['text'] = doc_obj.text[:197]
+        doc['url'] = doc_obj.url
+        res.append(doc)
 
-    res = make_response(jsonify(results), 200)
+
+    res = make_response(jsonify(res, 200))
 
     return res
 

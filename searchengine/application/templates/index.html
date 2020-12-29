@@ -8,41 +8,57 @@
   <div class="search-box">
     <h2>French News Search Engine</h2>
     <form method="post">
-      <div>
-        <div class="form-group query-form">
-          <div class="input-group">
-            <input type="text" id="query" class="form-control" placeholder="Search..." required>
+      <div class="flex-box">
+        <div class='filters card'>
+          <h5>Filters:</h5>
+          <div class="form-group">
+            <select class="form-control custom-select" id="n-select">
+              <option hidden display > Number of returns</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
           </div>
-          <button id="submit-btn" class="btn btn-outline-light search-btn" type="submit"><i class="fa fa-search"></i></button>
+          <div class="form-group">
+            <select class="form-control custom-select" id="cefr-level">
+              <option disabled hidden selected>Select level</option>
+              <option value="A1">A1</option>
+              <option value="A2">A2</option>
+              <option value="B1">B1</option>
+              <option value="B2">B2</option>
+              <option value="C1">C1</option>
+              <option value="C2">C2</option>
+            </select>
+          </div>
+          <div class="form-group input-daterange"> <input type="text" id="start" class="form-control"> <label class="form-control-placeholder" id="start-p" for="start">Start Date</label> <span class="fa fa-calendar" id="fa-1"></span> <input type="text" id="end" class="form-control"> <label class="form-control-placeholder" id="end-p" for="end">End Date</label> <span class="fa fa-calendar" id="fa-2"></span> 
+          </div>
         </div>
-      </div>
-      <div class='filters'>
-        <div class="form-group">
-          <select class="form-control custom-select" id="n-select">
-            <option hidden >Number of returns</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-          </select>
-        <div class="form-group">
-          <select class="form-control custom-select" id="cefr-level">
-            <option disabled hidden selected>Select level</option>
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
-            <option value="C1">C1</option>
-            <option value="C2">C2</option>
-          </select>
+        <div class="flex-box2">
+          <div class="query-form">
+            <div class="form-group input-group">
+              <input type="text" id="query" class="form-control" placeholder="Search..." required>
+            </div>
+            <div class="alert alert-light" style="margin-left: 5px; margin-right: 5px; height: 38px; padding-top: 6px;" role="alert">
+              <strong>OR</strong>
+            </div>
+            <div class="form-group site-select">
+              <select class="form-contorl custom-select">
+                <option disabled hidden selected>Get current news from...</option>
+                <option value="20min">20minutes.fr</option>
+              </select>
+            </div>
+            <div>
+              <button id="submit-btn" class="btn btn-outline-light search-btn" type="submit"><i class="fa fa-search"></i></button>
+            </div>
+          </div>
+          
         </div>
-        <div class="form-group input-daterange"> <input type="text" id="start" class="form-control"> <label class="form-control-placeholder" id="start-p" for="start">Start Date</label> <span class="fa fa-calendar" id="fa-1"></span> <input type="text" id="end" class="form-control"> <label class="form-control-placeholder" id="end-p" for="end">End Date</label> <span class="fa fa-calendar" id="fa-2"></span> </div>
-      </div>
-      
+        </div>
     </form>
+    <div id="results-box"></div>
   </div>
-  <div id="results-box"></div>
 </div>
 
 {% endblock %}
