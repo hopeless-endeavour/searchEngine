@@ -32,10 +32,18 @@ function clearResults(){
 function loadResults(){
   var query = document.getElementById("query");
   var n = document.getElementById("n-select");
+  var start_date = document.getElementById("start");
+  var end_date = document.getElementById("end");
+  var level = document.getElementById("level");
+  var domain = document.getElementById("domain");
 
   var entry = {
       query: query.value,
-      n: n.value
+      n: n.value,
+      start_date: start_date.value,
+      end_date: end_date.value,
+      level: level.value,
+      domain: domain.value
   };
 
 
