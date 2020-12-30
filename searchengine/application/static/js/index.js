@@ -5,7 +5,7 @@ function addHtmlResults(results){
   if (results.length == 0){
     bootbox.alert("No results found.")
   }
-  var htmltoAppend = results.map((result) => {
+  var htmltoAppend = results[0].map((result) => {
    
     return `
     <div class="card">
@@ -72,22 +72,45 @@ function setBackground(){
   })  
 }
 
+function post_id(id, type){
+  
+  var entry = {
+    'id': id,
+    'type': type
+  };
+
+  fetch(`${window.origin}/_bookmark`, {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify(entry),
+    cache: "no-cache",
+    headers: new Headers({
+      "content-type": "application/json"
+    })
+  })
+  .then((response) => {
+      if (response.status !== 200) {
+        console.log(`Error. Status code: ${response.status}`);
+        return;
+      }
+      response.json().then(function (data) {
+        console.log(data);
+      });
+    })
+  .catch((error) => {
+      console.log("Fetch error: " + error);
+    });
+}
 
 function bookmark(id){
-  console.log("bookmarked");
   var el = document.getElementById(id);
-  if(el.hasClass("fa-bookmark-o")){
-    // fetch request to _bookmark 
-    // check if user logged in on backend 
-    // if logged in change icon
-    // add user id and article id to linked table in db
-    // else flash that user must log in to bookmark 
-
-     el.addClass("fa-bookmark").removeClass("fa-bookmark-o");
+  var icon = el.childNodes[0]
+  if(icon.className == "fa fa-bookmark-o"){
+    post_id(id, "bookmark");
+    icon.className = "fa fa-bookmark";
   } else{
-    // remove article from users bookmarked pages 
-    // remove user article link
-    el.addClass("fa-bookmark-o").removeClass("fa-bookmark");
+    post_id(id, "unbookmark");
+    icon.className ="fa fa-bookmark-o";
   };
 }
 

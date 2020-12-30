@@ -1,9 +1,10 @@
 from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g
+from sqlalchemy import and_
 from flask import current_app as app
 import json
 
 from application.tfidf.doc_analysis import *
-from .models import db, Article, User
+from .models import db, Article, User, UserArticle
 from application.tfidf.classes import Corpus, Query
 
 C = Corpus()
@@ -26,7 +27,7 @@ def before_first_request():
         C.tf_idf = json_data["tf_idf"]
     
     print(C.num_docs)
-    
+    print(C.documents[0])
 
     # C.calc_tfidf()
     # print(C.len_vocab)
@@ -173,10 +174,38 @@ def background():
 
     return res
 
-@app.route('/_bookmarkPage', methods = ['post'])
+@app.route('/_bookmark', methods = ['get', 'post'])
 def bookmarkPage():
 
-    return 'heh'
+    req = request.get_json()
+    print(req)
+    print(session)
+    if session.get('user_id', None) is not None:
+        user_id = session['user_id']
+        print(user_id)
+        article_id = Article.query.filter_by(id=req["id"])
+
+        if req["type"] == "bookmark":
+            bookmark = UserArticle(user_id=user_id, article_id=article_id)
+            db.session.add(bookmark)
+            db.session.commit()
+            res = make_response(jsonify({"message": "OK"}), 200)
+            return res
+        else:
+            try:
+                bookmark = UserArticle.query.filter_by(UserArticle.user_id==user_id, UserArticle.article_id==article_id).first()
+                db.session.delete(bookmark)
+                db.session.commit()
+                res = make_response(jsonify({"message": "OK"}), 200)
+                return res
+            except:
+                print('error')
+                return make_response(jsonify({"message": "not ok"}))
+     
+    else:
+        flash("No username found in session")
+        return redirect(url_for('login'))
+
 
 @app.route('/uploadtoDB')
 def uploadtoDB():

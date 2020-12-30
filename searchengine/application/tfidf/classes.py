@@ -138,9 +138,9 @@ class Corpus():
         
         doc_ids = []
         res = sorted(result, key=result.get, reverse=True)
-        # print(res)
-        # print(len(res))
-        # print(len(self.doc_ids))
+        print(res)
+        print(len(res))
+        print(len(self.doc_ids))
         for i in res:
             doc_ids.append(self.doc_ids[i])
 

@@ -27,7 +27,8 @@ class Article(db.Model):
 
 
 class UserArticle(db.Model):
-	
-	__tablename__ = "user_article"
-	user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
-	article_id = db.Column(db.Integer, db.ForeignKey("articles.id"), primary_key=True)
+
+    __tablename__ = "user_article"
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
+    article_id = db.Column(db.Integer(), db.ForeignKey("articles.id"))
