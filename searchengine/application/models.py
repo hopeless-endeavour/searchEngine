@@ -8,7 +8,7 @@ class User(db.Model):
     password = db.Column(db.String(25), nullable=False)
     img = db.Column(db.String(25), default='default.jpg')
 
-    articles = db.relationship('Article', secondary='user_article')
+    # articles = db.relationship('Article', secondary='user_article')
 
 
 class Article(db.Model):
@@ -22,13 +22,13 @@ class Article(db.Model):
     url = db.Column(db.String, unique=True, nullable=False)
     cefr = db.Column(db.String, default=None)
 
-    users = db.relationship('User', secondary='user_article')
+    # users = db.relationship('User', secondary='user_article')
 
 
 
 class UserArticle(db.Model):
 
     __tablename__ = "user_article"
-    id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
     article_id = db.Column(db.Integer(), db.ForeignKey("articles.id"))
+    db.PrimaryKeyConstraint(user_id, article_id, name='')

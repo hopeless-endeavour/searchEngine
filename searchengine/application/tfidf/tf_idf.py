@@ -1,10 +1,14 @@
 import re
 import math
+import os
+import datetime
+import json
 from collections import Counter
 
 text = "Le gouvernement va pouvoir continuer de mettre en place des restrictions pour faire face à la deuxième vague de coronavirus. Dans une ambiance souvent tendue, l’Assemblée nationale a voté samedi la prorogation de l’état d’urgence sanitaire jusqu’au 16 février. Le projet de loi, voté par 71 voix contre 35 en première lecture, est attendu au Sénat mercredi et devrait être adopté définitivement début novembre."
 
 text2 = "Les appels au boycott de produits français se sont multipliés samedi dans plusieurs pays du Moyen-Orient. L’Organisation de coopération islamique, qui réunit les pays musulmans, a déploré « les propos de certains responsable français susceptibles de nuire aux relations franco-musulmanes ». L’émoi a été suscité par les propos du président Emmanuel Macron, qui a promis de ne pas « renoncer aux caricatures » de Mahomet, interdites dans la religion musulmane. vague, vague"
+
 
 def read_data(path):
     """ Returns 2D array as [[title, text, author, published, url], [title2, text2, author2, published2, url2]]"""
@@ -12,19 +16,21 @@ def read_data(path):
     corpus = []
 
     for i in os.listdir(path=path):
-        with open(f'{path}/{i}','r', encoding="utf8") as f:
+        with open(f'{path}/{i}', 'r', encoding="utf8") as f:
             full_data = f.read()
             json_obj = json.loads(full_data)
-        
+
             if (json_obj['text'] != " "):
-                corpus.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
+                corpus.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(
+                    json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
 
     return corpus
 
+
 class Corpus():
-    
+
     def __init__(self):
-        
+
         self.documents = []
         self.doc_ids = []
         self.num_docs = 0
@@ -36,25 +42,25 @@ class Corpus():
         self.tf_idf = []
 
     def add_document(self, id, title, text, flag):
-        
-        new_doc = Document(id, title, text)  
-        self.documents.append(new_doc) 
+
+        new_doc = Document(id, title, text)
+        self.documents.append(new_doc)
         self.doc_ids.append(id)
         if flag:
             self.update_vocab(self.num_docs)
         self.num_docs += 1
-        
+
     def update_vocab(self, doc_index):
 
         for i in self.documents[doc_index].tokens:
             if i not in self.vocab:
                 self.vocab.append(i)
 
-        self.vocab = sorted(self.vocab)       
+        self.vocab = sorted(self.vocab)
         self.len_vocab = len(self.vocab)
-        
+
     def calc_tf(self, doc):
-        
+
         tf = [0] * self.len_vocab
         for index, token in enumerate(self.vocab):
             for j in doc.tokens:
@@ -64,8 +70,8 @@ class Corpus():
         for i in range(len(tf)):
             tf[i] = tf[i] / doc.num_tokens
 
-        return tf 
-                    
+        return tf
+
     def calc_idf(self):
 
         df = [0] * self.len_vocab
@@ -74,7 +80,7 @@ class Corpus():
                 if token in doc.tokens:
                     df[i] += 1
 
-        self.df_vec = df  
+        self.df_vec = df
 
         idf = [0] * self.len_vocab
         for i, df in enumerate(df):
@@ -92,7 +98,7 @@ class Corpus():
         self.idf_vec = self.calc_idf()
 
         for arr in self.tf_matrix:
-            tfidf = []    
+            tfidf = []
             for i, tf in enumerate(arr):
                 tfidf_value = tf * self.idf_vec[i]
                 tfidf.append(tfidf_value)
@@ -102,7 +108,7 @@ class Corpus():
 
         q_tfidf = [0] * self.len_vocab
         counter = Counter(query.tokens)
-        
+
         for token in query.tokens:
 
             tf = counter[token]/query.num_tokens
@@ -120,12 +126,13 @@ class Corpus():
                 q_tfidf[index] = tf*idf
             except:
                 pass
-        
+
         return q_tfidf
-    
+
     def cosine_sim(self, vec1, vec2):
-        dot = sum(i*j for i,j in zip(vec1, vec2))
-        magnitude = math.sqrt(sum([val**2 for val in vec1])) * math.sqrt(sum([val**2 for val in vec2]))
+        dot = sum(i*j for i, j in zip(vec1, vec2))
+        magnitude = math.sqrt(
+            sum([val**2 for val in vec1])) * math.sqrt(sum([val**2 for val in vec2]))
         if not magnitude:
             return 0
 
@@ -147,10 +154,10 @@ class Corpus():
         # result = {x:y for x,y in result.items() if y != 0}
         # if all(i == 0 for i in result.values()):
         #     return "No results"
-        # else: 
-        #TODO: even when both texts contain the word, both come up with 0, work out way to see if there are no matches
-        #TODO: dataset scrapes whole page, so results come up if theres a refereenced article to another page with a teaser 
-        
+        # else:
+        # TODO: even when both texts contain the word, both come up with 0, work out way to see if there are no matches
+        # TODO: dataset scrapes whole page, so results come up if theres a refereenced article to another page with a teaser
+
         doc_ids = []
         res = sorted(result, key=result.get, reverse=True)
         print(res)
@@ -159,13 +166,13 @@ class Corpus():
         for i in res:
             doc_ids.append(self.doc_ids[i])
 
-        return doc_ids 
-   
-        
+        return doc_ids
+
+
 class Document():
-    
+
     def __init__(self, id, title, raw_text):
-        
+
         self.id = id
         self.title = title
         self.raw_text = raw_text
@@ -188,30 +195,32 @@ class Document():
         self.clean_text = new_text
 
     def preprocess_text(self):
-        
+
         punctuation = "!\"#$%&()*+…-.,/:;<=>?@[\\]^_«»{|}~\n“”€—–"
         self.clean_text = self.raw_text.lower()
-        self.clean_text = re.sub('[%s]' % re.escape(punctuation), '', self.clean_text)
+        self.clean_text = re.sub('[%s]' % re.escape(
+            punctuation), '', self.clean_text)
         self.clean_text = re.sub('\w*\d\w*', '', self.clean_text)
-        self.clean_text = re.sub("'", ' ', self.clean_text) # replaces ' with space
+        # replaces ' with space
+        self.clean_text = re.sub("'", ' ', self.clean_text)
         self.clean_text = re.sub('\n', '', self.clean_text)
         self.clean_text = self.clean_text.split()
         self.remove_stopwords()
-    
 
     def get_tokens(self):
 
         for i in self.clean_text:
             self.tokens.add(i)
-            
+
         self.num_tokens = len(self.tokens)
 
-    #TODO: get title tokens and add to list 
+    # TODO: get title tokens and add to list
 
 
 class Query(Document):
     def __init__(self, query):
-        super().__init__(id=None, title=None, raw_text=query) # give queries an id? Keep track of user queries?
+        # give queries an id? Keep track of user queries?
+        super().__init__(id=None, title=None, raw_text=query)
 
     def spell_check(self):
         pass

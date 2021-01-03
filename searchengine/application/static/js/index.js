@@ -1,18 +1,30 @@
 const resultsBox = document.getElementById("results-box");
 
-function addHtmlResults(results){
+function addHtmlResults(results) {
   clearResults();
-  if (results.length == 0){
+  if (results.length == 0) {
     bootbox.alert("No results found.")
   }
+
+
   var htmltoAppend = results[0].map((result) => {
-   
+
+    var user_id = document.getElementById('user_id');
+
+    if (user_id == null) {
+      var user_id = null;
+      var button = '';
+    } else {
+      var user_id = user_id.innerHTML;
+      var button = `<button id="${result.id}" class="btn bookmark-btn ml-auto" type="submit" onclick="bookmark(${result.id}, ${user_id})"><i class="fa fa-bookmark-o"></i></button>`
+    };
+
     return `
     <div class="card">
       <div class="card-body">
         <div class="card-title d-flex flex-row">
-        <h5>${result.title}</h5>
-        <button id="${result.id}" class="btn bookmark-btn ml-auto" type="submit" onclick="bookmark(${result.id})"><i class="fa fa-bookmark-o"></i></button>
+        <a href="${window.origin}/view_article/${result.id}"><h5>${result.title}</h5></a>
+        ${button}
         </div>
         <a href="${result.url}" class="card-link card-subtitle text-muted">${result.url}</a>
         <p class="card-text">${result.text}...</p>
@@ -23,13 +35,13 @@ function addHtmlResults(results){
   resultsBox.innerHTML = htmltoAppend;
 }
 
-function clearResults(){
-  while (resultsBox.firstElementChild){
+function clearResults() {
+  while (resultsBox.firstElementChild) {
     resultsBox.removeChild(resultsBox.firstElementChild);
   }
 }
 
-function loadResults(){
+function loadResults() {
   var query = document.getElementById("query");
   var n = document.getElementById("n-select");
   var start_date = document.getElementById("start");
@@ -38,12 +50,12 @@ function loadResults(){
   var domain = document.getElementById("domain");
 
   var entry = {
-      query: query.value,
-      n: n.value,
-      start_date: start_date.value,
-      end_date: end_date.value,
-      level: level.value,
-      domain: domain.value
+    query: query.value,
+    n: n.value,
+    start_date: start_date.value,
+    end_date: end_date.value,
+    level: level.value,
+    domain: domain.value
   };
 
 
@@ -56,7 +68,7 @@ function loadResults(){
       "content-type": "application/json"
     })
   })
-  .then((response) => {
+    .then((response) => {
       if (response.status !== 200) {
         console.log(`Error. Status code: ${response.status}`);
         return;
@@ -66,24 +78,25 @@ function loadResults(){
         addHtmlResults(data);
       });
     })
-  .catch((error) => {
+    .catch((error) => {
       console.log("Fetch error: " + error);
     });
 }
 
-function setBackground(){
+function setBackground() {
   fetch(`${window.origin}/_upload`)
-  .then(response => response.json())
-  .then(data => {
-    console.log(data);
-    document.body.style.backgroundImage = `url(${data})`;
-  })  
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      document.body.style.backgroundImage = `url(${data})`;
+    })
 }
 
-function post_id(id, type){
-  
+function post_id(article_id, user_id, type) {
+
   var entry = {
-    'id': id,
+    'article_id': article_id,
+    'user_id': user_id,
     'type': type
   };
 
@@ -96,7 +109,7 @@ function post_id(id, type){
       "content-type": "application/json"
     })
   })
-  .then((response) => {
+    .then((response) => {
       if (response.status !== 200) {
         console.log(`Error. Status code: ${response.status}`);
         return;
@@ -105,37 +118,51 @@ function post_id(id, type){
         console.log(data);
       });
     })
-  .catch((error) => {
+    .catch((error) => {
       console.log("Fetch error: " + error);
     });
 }
 
-function bookmark(id){
-  var el = document.getElementById(id);
+function bookmark(article_id, user_id) {
+  var el = document.getElementById(article_id);
   var icon = el.childNodes[0]
-  if(icon.className == "fa fa-bookmark-o"){
-    post_id(id, "bookmark");
+  console.log(user_id);
+  if (icon.className == "fa fa-bookmark-o") {
+    post_id(article_id, user_id, "bookmark");
     icon.className = "fa fa-bookmark";
-  } else{
-    post_id(id, "unbookmark");
-    icon.className ="fa fa-bookmark-o";
+  } else {
+    post_id(article_id, user_id, "unbookmark");
+    icon.className = "fa fa-bookmark-o";
   };
 }
 
-$(function(){
+function translate_text() {
+  var textarea = document.getElementsByTagName('p');
+  var selectedtext = '';
 
-  setBackground();
+  if (document.getSelection) {
+    selectedtext = document.getSelection().toString();
+    console.log(selectedtext);
+    // post request to translation api 
+    // render results 
+    }
+  else return;
+
+}
+
+$(function () {
+
+  // setBackground();
 
   $('.input-daterange').datepicker({
     format: 'dd-mm-yyyy',
     autoclose: true,
     clearBtn: true,
     disableTouchKeyboard: true
-    });
+  });
 
   $("#submit-btn").on('click', () => {
     loadResults();
     return false;
-    });
-
+  });
 });

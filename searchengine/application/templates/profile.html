@@ -5,7 +5,29 @@
 {% block content %}
 
 <div class="view">
-  <div class="search-box">
+  <div id="profile" class="card">
+    <div class="card-body">
+      <!-- <i class="fa fa-user-circle-o" aria-hidden="true" ></i> -->
+      <h5 class="card-title d-flex flex-row">{{ user.username | upper }}</h5>
+      <h6 class="card-text">You have {{ bookmarks | length }} bookmarked pages: </h6>
+      {% for i in bookmarks%}
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title d-flex flex-row">
+            <a href="{{ url_for('view_article', article_id=i.id) }}"><h5>{{ i.title }}</h5></a>
+            <button id="{{ i.id }}" class="btn bookmark-btn ml-auto" type="submit"
+              onclick="bookmark({{ i.id }}, {{ user.id }})"><i class="fa fa-bookmark"></i></button>
+          </div>
+          <a href="{{ i.url }}" class="card-link card-subtitle text-muted">{{ i.url }}</a>
+          <p class="card-text">{{ i.text[:197] }}...</p>
+        </div>
+      </div>
+      {% endfor%}
+    </div>
+  </div>
+</div>
+
+<!-- <div class="search-box">
     <h2 class="title">{{user.username | upper}}'s Profile</h2>
     <h2 class="subtitle">You are user number #{{user.id}}</h2>
     <h3>File Upload</h3>
@@ -13,8 +35,6 @@
       <p><input type="file" name="file"></p>
       <p><input type="submit" value="Submit"></p>
     </form>
-  </div>
-</div>
-
+  </div> -->
 
 {% endblock %}

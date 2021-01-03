@@ -6,7 +6,8 @@ body{
   width: 100%;
   background: no-repeat center center fixed;
   background-size: cover;
-}
+  background-image: url(../img/default.jpg);
+} 
 
 h2 {
   text-align: center;

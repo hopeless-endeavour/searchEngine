@@ -1,10 +1,13 @@
-from random import randint 
+from random import randint
 from requests import get
-from contextlib import closing 
+from contextlib import closing
 from requests.exceptions import RequestException
 from bs4 import BeautifulSoup as bs
 
+
 class Spider:
+
+    # TODO: get first article page from "seed"
 
     def __init__(self, seed, depth):
         self.visited_urls = []
@@ -13,13 +16,12 @@ class Spider:
         self.adj_graph = {}
         self.VALID_DOMAINS = ["www.20minutes.fr"]
         self.depth = depth
-        
 
         if self.check_domain(seed):
             self.seed = seed
         else:
             self.seed = None
-    
+
     def check_response(self, resp):
         """Returns true if response from url is html."""
 
@@ -50,9 +52,9 @@ class Spider:
             return None
 
     def crawl_20mins(self):
-        """ Crawls and scraps www.20minutes.fr.  Returns dict of scraped content, where links is a list of all other articles the url points to """ 
+        """ Crawls and scraps www.20minutes.fr.  Returns dict of scraped content, where links is a list of all other articles the url points to """
 
-        #TODO: scrape date of publication too 
+        # TODO: scrape date of publication too
         print(f"Attempting to crawl 20mins at depth {self.depth}")
 
         content = self.get_content(self.currentNode)
@@ -71,7 +73,7 @@ class Spider:
         urlDict = {"title": title, "content": text, "links": links}
 
         return urlDict
-    
+
     def crawl(self):
 
         if self.VALID_DOMAINS[0] in self.seed:
@@ -79,47 +81,40 @@ class Spider:
         else:
             print("error")
 
-
     def bfs(self):
 
-        #TODO: make recursive instead? 
+        # TODO: make recursive instead?
 
-        # add first url to queue so it's visited first
         self.queue.append(self.seed)
 
         while self.depth > 0:
             if len(self.queue) != 0:
-                # move item at beginning of queue into currentNode 
-                self.currentNode = self.queue.pop(0) 
-                # scrape the currentNode url to get it's data and links 
+                # move item at beginning of queue into currentNode
+                self.currentNode = self.queue.pop(0)
+                # scrape the currentNode url to get it's data and links
                 urlDict = self.crawl()
                 self.adj_graph[self.currentNode] = urlDict
                 # add the currentNode data to the corpus class/graph
-                # append the currentNode to visited list after data has been collected 
+                # append the currentNode to visited list after data has been collected
                 self.visited_urls.append(self.currentNode)
                 self.depth -= 1
-                print("visited ", self.visited_urls)
-                # get all neighbouring links and add to queue 
+                # print("visited ", self.visited_urls)
+                # get all neighbouring links and add to queue
                 for i in self.adj_graph[self.currentNode]["links"]:
                     if (i not in self.adj_graph) and (i not in self.queue):
                         self.queue.append(i)
-                
-                print('queue ' , self.queue)
+
+                # print('queue ' , self.queue)
             else:
-                print("queue empty")
+                # print("queue empty")
                 break
-            
+
+        print(self.adj_graph)
         return self.adj_graph
-    
+
     def run(self):
 
         if self.seed is not None:
-            self.bfs()
+            return self.bfs()
         else:
             print("Invalid domain")
-
-            
-
-
-
-
