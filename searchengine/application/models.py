@@ -24,6 +24,8 @@ class Article(db.Model):
 
     # users = db.relationship('User', secondary='user_article')
 
+    def as_dict(self):
+       return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class UserArticle(db.Model):

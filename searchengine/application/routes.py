@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g, json
+from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g, json, after_this_request
 from sqlalchemy import and_
 from flask import current_app as app
 import random
@@ -15,12 +15,9 @@ def upload_dataset_toDB(path):
 
     corpus = read_data(path)
     for i in range(len(corpus)):
-        article = Article(title=corpus[i][0], text=corpus[i][1],
-                          author=corpus[i][2], published=corpus[i][3], url=corpus[i][4])
-        db.session.add(article)
+        add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4])
 
-    db.session.commit()
-    print('success')
+    print('Uploaded dataset to DB')
 
 
 def update_data_file():
@@ -80,8 +77,7 @@ def index():
         n_cefrs[key] = Article.query.filter_by(cefr=key).count()
 
     obj = Article.query.filter_by(id=1).first()
-    obj.__dict__.pop('_sa_instance_state')
-    print(obj.__dict__)
+    print("Obj Dict : ", obj.as_dict())
     return render_template('index.html', n_articles=n_articles, n_cefrs=n_cefrs)
 
 
@@ -216,36 +212,30 @@ def background():
                 print("Already in DB")
 
         for i in article_dict.keys():
-            print(i)
-            doc = {}
             doc_obj = Article.query.filter_by(url=i).first()
-            doc['id'] = doc_obj.id
-            doc['title'] = doc_obj.title
-            doc['text'] = doc_obj.text[:197]
-            doc['cefr'] = doc_obj.cefr
-            doc['url'] = doc_obj.url
+            doc = doc_obj.as_dict()
+            doc['text'] = doc['text'][:197]
             res.append(doc)
 
-
-        @app.after_this_request
-        def 
-        update_tfidf()
-        update_data_file()
-        print("Successfully updated")
+        @after_this_request
+        def update(response):
+            print("yoik")
+            update_tfidf()
+            update_data_file()
+            print("Successfully updated")
+            return response
+            
+        
 
 
     else:
         doc_ids = C.search_query(req['query'])[:int(req['n'])]
         
         for i in doc_ids:
-            doc = {}
             doc_obj = Article.query.filter_by(id=i).first()
-            doc['id'] = doc_obj.id
-            doc['title'] = doc_obj.title
-            doc['text'] = doc_obj.text[:197]
-            doc['cefr'] = doc_obj.cefr
-            doc['url'] = doc_obj.url
-            res.append(doc_obj)
+            doc = doc_obj.as_dict()
+            doc['text'] = doc['text'][:197]
+            res.append(doc)
 
     return make_response(jsonify(res, 200))
 
