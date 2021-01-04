@@ -9,6 +9,7 @@ text = "Le gouvernement va pouvoir continuer de mettre en place des restrictions
 
 text2 = "Les appels au boycott de produits français se sont multipliés samedi dans plusieurs pays du Moyen-Orient. L’Organisation de coopération islamique, qui réunit les pays musulmans, a déploré « les propos de certains responsable français susceptibles de nuire aux relations franco-musulmanes ». L’émoi a été suscité par les propos du président Emmanuel Macron, qui a promis de ne pas « renoncer aux caricatures » de Mahomet, interdites dans la religion musulmane. vague, vague"
 
+text3 = "Cette année, Joe Biden a renvoyé Donald Trump dans son golf privé en prenant bientôt sa place à la Maison Blanche. L’Argentine est proche de légaliser l’avortement et Adèle Haenel s’est levée contre les violences faites aux femmes. Pour la première fois dans l’Union européenne, les énergies renouvelables ont produit plus d’électricité que les combustibles fossiles lors du premier semestre 2020. Tom Moor, un ancien capitaine de l'armée britannique centenaire a collecté près de 40 millions de livres pour le système hospitalier du Royaume-Uni, en marchant avec son déambulateur !"
 
 def read_data(path):
     """ Returns 2D array as [[title, text, author, published, url], [title2, text2, author2, published2, url2]]"""
@@ -46,15 +47,18 @@ class Corpus():
         new_doc = Document(id, title, text)
         self.documents.append(new_doc)
         self.doc_ids.append(id)
-        if flag:
-            self.update_vocab(self.num_docs)
         self.num_docs += 1
+        if flag:
+            self.update_vocab(id)
+        
 
-    def update_vocab(self, doc_index):
+    def update_vocab(self, doc_id):
 
-        for i in self.documents[doc_index].tokens:
-            if i not in self.vocab:
-                self.vocab.append(i)
+        for i in self.documents:
+            if i.id == doc_id:
+                for j in i.tokens:
+                    if j not in self.vocab:
+                        self.vocab.append(j)
 
         self.vocab = sorted(self.vocab)
         self.len_vocab = len(self.vocab)
@@ -91,6 +95,7 @@ class Corpus():
     def calc_tfidf(self):
 
         self.tf_matrix = []
+        self.tf_idf = []
 
         for i in self.documents:
             self.tf_matrix.append(self.calc_tf(i))
@@ -227,7 +232,8 @@ class Query(Document):
 
 
 # c = Corpus()
-# c.add_document(1, 'one', text)
-# c.add_document(2, 'two', text2)
+# c.add_document(1, 'one', text, True)
+# c.add_document(2, 'two', text2, True)
+# # c.add_document(3, 'three', text3, True)
 # c.calc_tfidf()
 # res = c.search_query("macron")

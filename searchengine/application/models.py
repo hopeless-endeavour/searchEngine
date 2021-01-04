@@ -31,4 +31,4 @@ class UserArticle(db.Model):
     __tablename__ = "user_article"
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
     article_id = db.Column(db.Integer(), db.ForeignKey("articles.id"))
-    db.PrimaryKeyConstraint(user_id, article_id, name='')
+    db.PrimaryKeyConstraint(user_id, article_id, name='comp_key')

@@ -1,15 +1,16 @@
 from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g, json
 from sqlalchemy import and_
 from flask import current_app as app
+import random
 
 from .models import db, Article, User, UserArticle
 from application.tfidf.tf_idf import Corpus, Query, read_data
-from application.tfidf.spider import Spider
+from application.tfidf.spider import Spider, TwentyMinSpider
 
 C = Corpus()
 
 
-def upload_dataset(path):
+def upload_dataset_toDB(path):
     """ Uploads data from dataset from given path into database.  """
 
     corpus = read_data(path)
@@ -25,8 +26,8 @@ def upload_dataset(path):
 def update_data_file():
     """ Writes data from Corpus to json file. """
 
-    json_data = {"num_docs": C.num_docs, "doc_ids": C.doc_ids, "vocab": C.vocab, "len_vocab": C.len_vocab,
-                 "tf_matrix": C.tf_matrix, "df_vec": C.df_vec, "idf_vec": C.idf_vec, "tf_idf": C.tf_idf}
+    json_data = {"num_docs": C.num_docs, "doc_ids": C.doc_ids,
+                 "vocab": C.vocab, "len_vocab": C.len_vocab, "tf_idf": C.tf_idf}
 
     with open('data_file.json', 'w') as f:
         json.dump(json_data, f)
@@ -34,16 +35,26 @@ def update_data_file():
 
 def add_to_db(model_obj, **kwargs):
 
-    # add_to_db(User, username="bob", password="bob")
     record = model_obj(**kwargs)
     db.session.add(record)
     db.session.commit()
 
 
+def update_tfidf():
+
+    global C
+    C = Corpus()
+    articles = Article.query.all()
+    for i in articles:
+        C.add_document(i.id, i.title, i.text, True)
+
+    C.calc_tfidf()
+
+
 @app.before_first_request
 def before_first_request():
-    
-    # attempts to open data_file.json that contains Corpus data 
+
+    # attempts to open data_file.json that contains Corpus data
     try:
         with open('data_file.json', 'r') as f:
             json_data = json.load(f)
@@ -51,36 +62,26 @@ def before_first_request():
             C.doc_ids = json_data["doc_ids"]
             C.vocab = json_data["vocab"]
             C.len_vocab = json_data["len_vocab"]
-            C.tf_matrix = json_data["tf_matrix"]
-            C.df_vec = json_data["df_vec"]
-            C.idf_vec = json_data["idf_vec"]
             C.tf_idf = json_data["tf_idf"]
 
-    # if file doesn't exist, upload the dataset to the database and do corpus calculations
+    # if file doesn't exist, upload the dataset to the database, calc tf_idf and update data file
     except FileNotFoundError:
-        upload_dataset("appplication/data")
-        articles = Article.query.all()
-        for i in articles:
-            C.add_document(i.id, i.title, i.text, True)
-
-        C.calc_tfidf()
+        upload_dataset_toDB("application/data")
+        update_tfidf()
         update_data_file()
-
-    # print(C.len_vocab)
-    # print(C.df_vec)
-    # res = C.search_query("macron")
 
 
 @app.route('/', methods=['post', 'get'])
 def index():
 
     n_cefrs = {'A1': 0, 'A2': 0, 'B1': 0, 'B2': 0, 'C1': 0, 'C2': 0}
-    # a = db.session.execute('select count(id) as article_id from articles').scalar()
-    # print("num", a)
     n_articles = Article.query.count()
     for key, value in n_cefrs.items():
         n_cefrs[key] = Article.query.filter_by(cefr=key).count()
 
+    obj = Article.query.filter_by(id=1).first()
+    obj.__dict__.pop('_sa_instance_state')
+    print(obj.__dict__)
     return render_template('index.html', n_articles=n_articles, n_cefrs=n_cefrs)
 
 
@@ -198,22 +199,44 @@ def background():
 
     req = request.get_json()
     print(req)
+    res = []
 
-    if req["domain"] != '':
-        spider = Spider(
-            "https://www.20minutes.fr/gastronomie/2940355-20201230-remede-cuites-hot-shot-huitres-armand-arnal", int(req['n']))
-        article_dict = spider.run()
-        C.add_document(103, article_dict["https://www.20minutes.fr/gastronomie/2940355-20201230-remede-cuites-hot-shot-huitres-armand-arnal"]['title'],
-                       article_dict["https://www.20minutes.fr/gastronomie/2940355-20201230-remede-cuites-hot-shot-huitres-armand-arnal"]['content'], False)
-        print(C.documents)
+    if req["domain"] != '' and req['query'] == '':
+        article_dict = TwentyMinSpider(
+            "https://www.20minutes.fr", int(req['n'])).run()
+
+        print(article_dict.keys())
         # calc cefr
-        # add to corpus
-        # update tfidf
-        pass
+        for i in article_dict:
+            article = Article.query.filter_by(url=i).first()
+            if not article:
+                add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
+                          author=article_dict[i]["author"], published=article_dict[i]["published"], url=i)
+            else:
+                print("Already in DB")
+
+        for i in article_dict.keys():
+            print(i)
+            doc = {}
+            doc_obj = Article.query.filter_by(url=i).first()
+            doc['id'] = doc_obj.id
+            doc['title'] = doc_obj.title
+            doc['text'] = doc_obj.text[:197]
+            doc['cefr'] = doc_obj.cefr
+            doc['url'] = doc_obj.url
+            res.append(doc)
+
+
+        @app.after_this_request
+        def 
+        update_tfidf()
+        update_data_file()
+        print("Successfully updated")
+
 
     else:
         doc_ids = C.search_query(req['query'])[:int(req['n'])]
-        res = []
+        
         for i in doc_ids:
             doc = {}
             doc_obj = Article.query.filter_by(id=i).first()
@@ -222,11 +245,9 @@ def background():
             doc['text'] = doc_obj.text[:197]
             doc['cefr'] = doc_obj.cefr
             doc['url'] = doc_obj.url
-            res.append(doc)
+            res.append(doc_obj)
 
-        res = make_response(jsonify(res, 200))
-
-    return res
+    return make_response(jsonify(res, 200))
 
 
 @app.route('/_bookmark', methods=['get', 'post'])

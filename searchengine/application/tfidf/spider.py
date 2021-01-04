@@ -3,6 +3,7 @@ from requests import get
 from contextlib import closing
 from requests.exceptions import RequestException
 from bs4 import BeautifulSoup as bs
+import datetime
 
 
 class Spider:
@@ -14,13 +15,8 @@ class Spider:
         self.queue = []
         self.current_node = None
         self.adj_graph = {}
-        self.VALID_DOMAINS = ["www.20minutes.fr"]
         self.depth = depth
-
-        if self.check_domain(seed):
-            self.seed = seed
-        else:
-            self.seed = None
+        self.seed = seed 
 
     def check_response(self, resp):
         """Returns true if response from url is html."""
@@ -30,11 +26,6 @@ class Spider:
                 and content_type is not None
                 and content_type.find("html") > -1)
 
-    def check_domain(self, url):
-
-        for i in self.VALID_DOMAINS:
-            if i in url:
-                return True
 
     def get_content(self, url):
         """Requests content of url. If invalid reponse, returns None."""
@@ -51,41 +42,23 @@ class Spider:
             print("Error during requests to {0} : {1}".format(url, str(e)))
             return None
 
-    def crawl_20mins(self):
-        """ Crawls and scraps www.20minutes.fr.  Returns dict of scraped content, where links is a list of all other articles the url points to """
-
-        # TODO: scrape date of publication too
-        print(f"Attempting to crawl 20mins at depth {self.depth}")
-
-        content = self.get_content(self.currentNode)
-        soup = bs(content, "html.parser")
-        title = soup.find("h1", class_="nodeheader-title").text
-        print(title)
-        text = ''
-
-        for i in soup.find('div', class_='content').find_all('p'):
-            text += i.text
-
-        links = []
-        for i in soup.find("ul", class_="block-list").find_all('a'):
-            links.append(i.get("href"))
-
-        urlDict = {"title": title, "content": text, "links": links}
-
-        return urlDict
-
     def crawl(self):
+        pass
+    
+    def get_initial_links(self):
+        pass
 
-        if self.VALID_DOMAINS[0] in self.seed:
-            return self.crawl_20mins()
+    def check_url(self, url):
+
+        if "http" not in url:  # doesn't add invalid href's
+            return f"{self.seed}{url}"
         else:
-            print("error")
+            return url
+        
 
     def bfs(self):
 
         # TODO: make recursive instead?
-
-        self.queue.append(self.seed)
 
         while self.depth > 0:
             if len(self.queue) != 0:
@@ -106,15 +79,79 @@ class Spider:
 
                 # print('queue ' , self.queue)
             else:
-                # print("queue empty")
+                print("queue empty")
                 break
 
-        print(self.adj_graph)
         return self.adj_graph
 
     def run(self):
 
         if self.seed is not None:
+            self.get_initial_links()
             return self.bfs()
         else:
             print("Invalid domain")
+
+
+class TwentyMinSpider(Spider):
+
+    def __init__(self, seed, depth):
+        super().__init__(seed, depth)
+    
+    def get_initial_links(self):
+
+        content = self.get_content(self.seed)
+        soup = bs(content, "html.parser")
+        articles = soup.find("div", {'id': "page-content"}).find_all('article')
+        for i in articles:
+            self.queue.append(self.check_url(i.find('a').get('href')))
+
+    def crawl(self):
+        
+        print(f"Attempting to crawl 20mins at depth {self.depth}")
+
+        # get html from page 
+        content = self.get_content(self.currentNode)
+        soup = bs(content, "html.parser")
+
+        # find date published 
+        info = soup.find("div", class_="nodeheader-infos")
+        date_pub = info.find("time").get('datetime')
+        date_pub = datetime.datetime.strptime(date_pub, "%Y-%m-%dT%H:%M:%S%z")
+
+        # find title
+        title = soup.find("h1", class_="nodeheader-title").text
+        print(title)
+
+        # find author 
+        author = info.find('address', class_="authorsign").find("span", class_="authorsign-label")
+        if author is not None:
+            author = author.text 
+        elif info.find('address', class_="authorsign").find("span", class_="author-name") is not None:
+            author = info.find('address', class_="authorsign").find("span", class_="author-name").text
+        else:
+            author = "Unknown"
+        print(author)
+        
+        # scrape text from page
+        text = ''
+        for i in soup.find('div', class_='content').find_all('p'):
+            text += i.text
+
+        # crawl page for links to other articles
+        links = []
+        for i in soup.find("ul", class_="block-list").find_all('a'):
+            links.append(i.get("href"))
+
+        urlDict = {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+
+        return urlDict
+
+    
+class FigaroSpider:
+    def __init__(self):
+        super().__init__()
+    
+class MondeSpider:
+    def __init__(self):
+        super().__init__()
