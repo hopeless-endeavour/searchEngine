@@ -21,6 +21,9 @@ function addHtmlResults(results) {
 
     return `
     <div class="card">
+      <div class="card-header">
+         Cefr: ${result.cefr}
+       </div>
       <div class="card-body">
         <div class="card-title d-flex flex-row">
         <a href="${window.origin}/view_article/${result.id}"><h5>${result.title}</h5></a>
@@ -44,6 +47,7 @@ function clearResults() {
 function loadResults() {
   var query = document.getElementById("query");
   var n = document.getElementById("n-select");
+  var filter_type = document.getElementById("filter-type");
   var start_date = document.getElementById("start");
   var end_date = document.getElementById("end");
   var level = document.getElementById("level");
@@ -52,6 +56,7 @@ function loadResults() {
   var entry = {
     query: query.value,
     n: n.value,
+    filter_type: filter_type.value,
     start_date: start_date.value,
     end_date: end_date.value,
     level: level.value,

@@ -46,7 +46,12 @@ class Spider:
         pass
     
     def get_initial_links(self):
-        pass
+
+        content = self.get_content(self.seed)
+        soup = bs(content, "html.parser")
+        urls = soup.find_all('a')
+        for i in urls:
+            self.queue.append(self.check_url(i.get('href')))
 
     def check_url(self, url):
 
@@ -95,8 +100,8 @@ class Spider:
 
 class TwentyMinSpider(Spider):
 
-    def __init__(self, seed, depth):
-        super().__init__(seed, depth)
+    def __init__(self, depth):
+        super().__init__(depth=depth, seed="https://www.20minutes.fr")
     
     def get_initial_links(self):
 
@@ -108,7 +113,7 @@ class TwentyMinSpider(Spider):
 
     def crawl(self):
         
-        print(f"Attempting to crawl 20mins at depth {self.depth}")
+        print(f"Attempting to crawl {self.currentNode} at depth {self.depth}")
 
         # get html from page 
         content = self.get_content(self.currentNode)
@@ -121,7 +126,6 @@ class TwentyMinSpider(Spider):
 
         # find title
         title = soup.find("h1", class_="nodeheader-title").text
-        print(title)
 
         # find author 
         author = info.find('address', class_="authorsign").find("span", class_="authorsign-label")
@@ -131,12 +135,11 @@ class TwentyMinSpider(Spider):
             author = info.find('address', class_="authorsign").find("span", class_="author-name").text
         else:
             author = "Unknown"
-        print(author)
         
         # scrape text from page
         text = ''
         for i in soup.find('div', class_='content').find_all('p'):
-            text += i.text
+            text += "\n" + i.text
 
         # crawl page for links to other articles
         links = []
@@ -148,10 +151,120 @@ class TwentyMinSpider(Spider):
         return urlDict
 
     
-class FigaroSpider:
-    def __init__(self):
-        super().__init__()
+class FigaroSpider(Spider):
+    def __init__(self, depth):
+        super().__init__(depth=depth, seed="https://www.lefigaro.fr/")
     
-class MondeSpider:
-    def __init__(self):
-        super().__init__()
+    def get_initial_links(self):
+
+        content = self.get_content(self.seed)
+        soup = bs(content, "html.parser")
+        articles = soup.find("div", {'class': "fig-main-wrapper"}).find_all('article')
+        for i in articles:
+            self.queue.append(self.check_url(i.find('a').get('href')))
+
+    def crawl(self):
+        
+        print(f"Attempting to crawl {self.currentNode} at depth {self.depth}")
+
+        # get html from page 
+        content = self.get_content(self.currentNode)
+        soup = bs(content, "html.parser")
+
+        # find date published 
+        info = soup.find("div", class_="fig-content-metas-info")
+        date_pub = info.find("time").get('datetime')
+        date_pub = datetime.datetime.strptime(date_pub, "%Y-%m-%dT%H:%M:%S%z")
+
+        # find title
+        title = soup.find("h1", class_="fig-headline").text
+
+        # find author 
+        author = info.find('a', class_="fig-content-metas__author")
+        if author is not None:
+            author = author.text 
+        else:
+            author = "Unknown"
+        
+        # scrape text from page
+        text = ''
+        for i in soup.find('article', class_='fig-main').find_all(['p', 'h2']):
+            text += i.text
+
+        # crawl page for links to other articles
+        links = []
+        urls = soup.find_all("a", class_="fig-body-link__link")
+        for i in urls:
+            links.append(self.check_url(i.get("href")))
+
+        urlDict = {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+
+        return urlDict
+
+
+class FranceInfoSpider(Spider):
+    def __init__(self,depth):
+        super().__init__(depth=depth, seed="https://www.francetvinfo.fr/")
+    
+    def get_initial_links(self):
+
+        content = self.get_content(self.seed)
+        soup = bs(content, "html.parser")
+        articles = soup.find_all("article")
+        for i in articles:
+            for j in i.find_all("a", class_="title"):
+                self.queue.append(self.check_url(j.get('href')))
+
+
+    def crawl(self):
+        
+        print(f"Attempting to crawl {self.currentNode} at depth {self.depth}")
+
+        # get html from page 
+        content = self.get_content(self.currentNode)
+        soup = bs(content, "html.parser")
+
+        # find date published 
+        date_pub = soup.find("time").get('datetime')
+        print(date_pub)
+        date_pub = datetime.datetime.strptime(date_pub, "%Y-%m-%dT%H:%M:%S%z")
+
+        # find title
+        if soup.find("span", class_="c-title__main"):
+            title = soup.find("span", class_="c-title__main").text
+        elif soup.find("article", class_="content-video").find("h1"):
+            title = soup.find("article", class_="content-video").find("h1").text
+        else:
+            print("Unknown title")
+        print(title)
+
+        # find author 
+        author = soup.find('div', class_="c-signature__names")
+        if author:
+            author = author.text 
+        elif soup.find("span", class_="author"):
+            author = soup.find("span", class_="author").text
+        else:
+            author = "Unknown"
+        print(author)
+        
+        # scrape text from page
+        text = ''
+        for i in soup.find('article', class_=['page-content', "content-video"]).find_all(['p', 'h2']):
+            text += i.text
+
+        # crawl page for links to other articles
+        links = []
+        if soup.find("ul", class_="same-topic__items"):
+            articles = soup.find("ul", class_="same-topic__items").find_all("article")
+            for i in articles:
+                links.append(i.find("a").get("href"))
+        elif soup.find("aside", class_="a-lire-aussi"):
+            urls = soup.find("aside", class_="a-lire-aussi").find_all("a")
+            for i in urls:
+                links.append(self.check_url(i.get("href")))
+        print(links)
+
+        urlDict = {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+
+        return urlDict

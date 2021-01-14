@@ -20,7 +20,7 @@ class Article(db.Model):
     author = db.Column(db.String, nullable=False)
     published = db.Column(db.DateTime, nullable=False)
     url = db.Column(db.String, unique=True, nullable=False)
-    cefr = db.Column(db.String, default=None)
+    cefr = db.Column(db.String, default="Unknown")
 
     # users = db.relationship('User', secondary='user_article')
 

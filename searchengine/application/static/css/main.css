@@ -44,6 +44,10 @@ p {
   margin-left: 10px;
 }
 
+.card-subtitle {
+  margin: 2px;
+}
+
 .card-text{
   margin-top: 10px;
 }

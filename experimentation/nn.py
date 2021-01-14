@@ -1,5 +1,6 @@
 import math 
-import numpy 
+import numpy as np
+import matplotlib.pyplot as plt
 
 class Layer:
     def __init__(self, num_inputs, num_nodes):
@@ -11,4 +12,21 @@ class Layer:
 
         return self.output
 
-layer1 = Layer()
+def softmax(u):
+    """ applies softmax function to vector u""" 
+
+    expu = np.exp(u)
+    return expu/np.sum(expu)
+
+def cross_entropy(p,q):
+    """ applies cross_entropy function to probalbility vectors p and q."""
+
+    return -np.vdot(p,np.log(q))
+
+def logReg(X, Y, alpha):
+
+    epochs = 5
+    N, d = X.shape
+    beta = np.zeros((K, d+1))
+
+    for i in range

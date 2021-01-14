@@ -1,14 +1,13 @@
 from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g, json, after_this_request
-from sqlalchemy import and_
 from flask import current_app as app
 import random
+import pickle
 
 from .models import db, Article, User, UserArticle
 from application.tfidf.tf_idf import Corpus, Query, read_data
-from application.tfidf.spider import Spider, TwentyMinSpider
+from application.tfidf.spider import TwentyMinSpider, FigaroSpider, FranceInfoSpider
 
 C = Corpus()
-
 
 def upload_dataset_toDB(path):
     """ Uploads data from dataset from given path into database.  """
@@ -17,17 +16,19 @@ def upload_dataset_toDB(path):
     for i in range(len(corpus)):
         add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4])
 
-    print('Uploaded dataset to DB')
+    print('Uploaded dataset to DB.')
 
 
 def update_data_file():
     """ Writes data from Corpus to json file. """
 
-    json_data = {"num_docs": C.num_docs, "doc_ids": C.doc_ids,
+    data = {"num_docs": C.num_docs, "doc_ids": C.doc_ids,
                  "vocab": C.vocab, "len_vocab": C.len_vocab, "tf_idf": C.tf_idf}
 
-    with open('data_file.json', 'w') as f:
-        json.dump(json_data, f)
+    with open('data_file.pkl', 'wb') as f:
+        pickle.dump(data, f)
+
+    print("Data file updated.")
 
 
 def add_to_db(model_obj, **kwargs):
@@ -46,6 +47,7 @@ def update_tfidf():
         C.add_document(i.id, i.title, i.text, True)
 
     C.calc_tfidf()
+    print("TF-IDF updated.")
 
 
 @app.before_first_request
@@ -53,16 +55,17 @@ def before_first_request():
 
     # attempts to open data_file.json that contains Corpus data
     try:
-        with open('data_file.json', 'r') as f:
-            json_data = json.load(f)
-            C.num_docs = json_data["num_docs"]
-            C.doc_ids = json_data["doc_ids"]
-            C.vocab = json_data["vocab"]
-            C.len_vocab = json_data["len_vocab"]
-            C.tf_idf = json_data["tf_idf"]
+        with open('data_file.pkl', 'rb') as f:
+            data = pickle.load(f)
+            C.num_docs = data["num_docs"]
+            C.doc_ids = data["doc_ids"]
+            C.vocab = data["vocab"]
+            C.len_vocab = data["len_vocab"]
+            C.tf_idf = data["tf_idf"]
 
     # if file doesn't exist, upload the dataset to the database, calc tf_idf and update data file
     except FileNotFoundError:
+        print("File not found.")
         upload_dataset_toDB("application/data")
         update_tfidf()
         update_data_file()
@@ -71,13 +74,14 @@ def before_first_request():
 @app.route('/', methods=['post', 'get'])
 def index():
 
-    n_cefrs = {'A1': 0, 'A2': 0, 'B1': 0, 'B2': 0, 'C1': 0, 'C2': 0}
+    n_cefrs = {'A1': 0, 'A2': 0, 'B1': 0, 'B2': 0, 'C1': 0, 'C2': 0, "Unknown": 0}
     n_articles = Article.query.count()
     for key, value in n_cefrs.items():
         n_cefrs[key] = Article.query.filter_by(cefr=key).count()
 
-    obj = Article.query.filter_by(id=1).first()
-    print("Obj Dict : ", obj.as_dict())
+    article_objs = Article.query.filter(Article.id.in_([1,10,30,40,50,60,80,200])).order_by(Article.published.desc()).all()
+    print([i.published for i in article_objs])
+
     return render_template('index.html', n_articles=n_articles, n_cefrs=n_cefrs)
 
 
@@ -190,7 +194,7 @@ def upload():
         return make_response(jsonify(img), 200)
 
 
-@app.route('/_background', methods=['post', 'get'])
+@app.route('/_background', methods=['post'])
 def background():
 
     req = request.get_json()
@@ -198,8 +202,12 @@ def background():
     res = []
 
     if req["domain"] != '' and req['query'] == '':
-        article_dict = TwentyMinSpider(
-            "https://www.20minutes.fr", int(req['n'])).run()
+        if req["domain"] == "20min":
+            article_dict = TwentyMinSpider(int(req['n'])).run()
+        elif req["domain"] == "figaro":
+            article_dict = FigaroSpider(int(req['n'])).run()
+        elif req["domain"] == "franceinfo":
+            article_dict = FranceInfoSpider(int(req['n'])).run()
 
         print(article_dict.keys())
         # calc cefr
@@ -209,31 +217,34 @@ def background():
                 add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
                           author=article_dict[i]["author"], published=article_dict[i]["published"], url=i)
             else:
-                print("Already in DB")
+                print(f"{article} already in DB.")
 
-        for i in article_dict.keys():
-            doc_obj = Article.query.filter_by(url=i).first()
-            doc = doc_obj.as_dict()
+        article_objs = Article.query.filter(Article.url.in_(article_dict.keys())).all()
+        print("Article_objs: ", article_objs)
+        for i in article_objs:
+            doc = i.as_dict()
             doc['text'] = doc['text'][:197]
             res.append(doc)
 
         @after_this_request
         def update(response):
-            print("yoik")
             update_tfidf()
             update_data_file()
             print("Successfully updated")
             return response
             
-        
-
-
     else:
         doc_ids = C.search_query(req['query'])[:int(req['n'])]
         
-        for i in doc_ids:
-            doc_obj = Article.query.filter_by(id=i).first()
-            doc = doc_obj.as_dict()
+        if req["filter_type"] == "newest":
+            article_objs = Article.query.filter(Article.id.in_(doc_ids)).order_by(Article.published.desc()).all()
+        elif req["filter_type"] == "oldest":
+            article_objs = Article.query.filter(Article.id.in_(doc_ids)).order_by(Article.published.asc()).all()
+        else:
+            article_objs = Article.query.filter(Article.id.in_(doc_ids)).all()
+
+        for i in article_objs:
+            doc = i.as_dict()
             doc['text'] = doc['text'][:197]
             res.append(doc)
 

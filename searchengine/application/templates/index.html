@@ -13,13 +13,12 @@
           <h5>Filters:</h5>
           <div class="form-group">
             <p>Size of DB: {{ n_articles}}</p>
-            <select class="form-control custom-select" id="n-select">
-              <option hidden display > Number of returns</option>
-              <option value="1">1 </option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
+            <label for="n-select" class="form-label">Number of returns:</label>
+            <select class="form-control custom-select" id="n-select" required>
+              <!-- <option value="" selected> Number of returns</option> -->
+              {% for i in range(1, 11) %}
+                <option value="{{i}}">{{i}} </option>
+              {% endfor %}
             </select>
           </div>
           <div class="form-group">
@@ -36,6 +35,14 @@
           </div>
           <div class="form-group input-daterange"> <input type="text" id="start" class="form-control"> <label class="form-control-placeholder" id="start-p" for="start">Start Date</label> <span class="fa fa-calendar" id="fa-1"></span> <input type="text" id="end" class="form-control"> <label class="form-control-placeholder" id="end-p" for="end">End Date</label> <span class="fa fa-calendar" id="fa-2"></span> 
           </div>
+          <div class="form-group">
+            <label for="filter-type" class="form-label">Filter by:</label>
+            <select class="form-control custom-select" id="filter-type">
+              <option value="relevance">Relevance</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </div>
         </div>
         <div class="flex-box2">
           <div class="query-form">
@@ -49,6 +56,8 @@
               <select class="form-contorl custom-select" id="domain">
                 <option value="" disabled hidden selected>Get current news from...</option>
                 <option value="20min">20minutes.fr</option>
+                <option value="figaro">lefigaro.fr</option>
+                <option value="franceinfo">francetvinfo.fr</option>
               </select>
             </div>
             <div>
