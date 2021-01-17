@@ -24,6 +24,11 @@ p {
   width: 8rem;
 } */
 
+/* .view{
+  height: 100%;
+  width: 100%;
+} */
+
 .search-box {
   top: 30%;
   margin-top: 20px;
@@ -41,7 +46,8 @@ p {
 
 .card {
   margin-top: 10px;
-  margin-left: 10px;
+  /* margin-left: 10%;
+  margin-right: 10%; */
 }
 
 .card-subtitle {
@@ -68,7 +74,9 @@ p {
   flex-direction: column;
   padding: 10px;
   margin-top: 0px;
-  width: initial;
+  width: 250px;
+  height: 400;
+  margin-right: 0%;
 }
 
 .flex-box {
@@ -96,7 +104,7 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  flex-grow: 2;
+  flex-grow: 3;
 }
 
 .search-btn{
@@ -105,6 +113,11 @@ p {
 
 .site-select{
   width: 500px;
+}
+
+#profile {
+  margin-left: 10%;
+  margin-right: 10%;
 }
 
 /* TODO: center align .auth-btn 

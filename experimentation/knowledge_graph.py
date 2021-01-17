@@ -117,38 +117,45 @@ def scrape_url(url):
 
     return urlDict
 
-
-def bfs(corpus, seedUrl, depth):
-    queue = []
-    visited = []
-    graphAdj = {}
-    currentNode = None
+def bfs(web, queue, visited, depth):
     
-    # add first url to queue so it's visited first
-    queue.append(seedUrl)
+    if not queue:
+        print("queue is empty")
+    
+    if depth > 0:
+        v = queue.pop(0)
+        print(f"visted {v}, content: {web[v]['content']}, depth: {depth}")
+        visited.append(v)
+        for u in web[v]['links']:
+            if u not in visited and u not in queue:
+                queue.append(u)
+        print(queue)
+        bfs(web, queue, visited, depth-1)
+    else: 
+        print("depth is 0")
 
-    while depth > 0: 
-        if len(queue) != 0:
-            # move item at beginning of queue into currentNode 
-            currentNode = queue.pop(0) 
-            # scrape the currentNode url to get it's data and links 
-            urlDict = scrape_url(currentNode)
-            graphAdj[currentNode] = urlDict
-            # add the currentNode data to the corpus class/graph
-            corpus.addNode(len(corpus.nodes), "DOC", raw_text=urlDict['content'])
-            # append the currentNode to visited list after data has been collected 
-            visited.append(currentNode)
-            depth -= 1
-            print("visited ", visited)
-            # get all neighbouring links and add to queue 
-            for i in graphAdj[currentNode]["links"]:
-                if (i not in graphAdj) and (i not in queue):
-                    queue.append(i)
+    # while depth > 0: 
+    #     if len(queue) != 0:
+    #         # move item at beginning of queue into currentNode 
+    #         currentNode = queue.pop(0) 
+    #         # scrape the currentNode url to get it's data and links 
+    #         urlDict = scrape_url(currentNode)
+    #         graphAdj[currentNode] = urlDict
+    #         # add the currentNode data to the corpus class/graph
+    #         corpus.addNode(len(corpus.nodes), "DOC", raw_text=urlDict['content'])
+    #         # append the currentNode to visited list after data has been collected 
+    #         visited.append(currentNode)
+    #         depth -= 1
+    #         print("visited ", visited)
+    #         # get all neighbouring links and add to queue 
+    #         for i in graphAdj[currentNode]["links"]:
+    #             if (i not in graphAdj) and (i not in queue):
+    #                 queue.append(i)
             
-            print('queue ' , queue)
-        else:
-            print("queue empty")
-            break
+    #         print('queue ' , queue)
+    #     else:
+    #         print("queue empty")
+    #         break
         
     return visited 
 
@@ -164,6 +171,9 @@ web = {
         }
 
 G = Graph()
-visited = bfs(G, 'https://www.20minutes.fr/sport/2940007-20201226-coronavirus-joueurs-wolverhampton-interdits-faire-courses-supermarche', 5)
+# visited = bfs(G, 'https://www.20minutes.fr/sport/2940007-20201226-coronavirus-joueurs-wolverhampton-interdits-faire-courses-supermarche', 5)
+visited = []
+q = ['A']
+bfs(web, q, visited, 2)
 
 # change bfs function to be recursive instead of while loop??

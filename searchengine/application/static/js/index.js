@@ -1,11 +1,7 @@
 const resultsBox = document.getElementById("results-box");
 
-function addHtmlResults(results) {
-  clearResults();
-  if (results.length == 0) {
-    bootbox.alert("No results found.")
-  }
-
+function add_html_results(results) {
+  clear_results();
 
   var htmltoAppend = results[0].map((result) => {
 
@@ -22,7 +18,7 @@ function addHtmlResults(results) {
     return `
     <div class="card">
       <div class="card-header">
-         Cefr: ${result.cefr}
+         CEFR: ${result.cefr}
        </div>
       <div class="card-body">
         <div class="card-title d-flex flex-row">
@@ -38,18 +34,16 @@ function addHtmlResults(results) {
   resultsBox.innerHTML = htmltoAppend;
 }
 
-function clearResults() {
+function clear_results() {
   while (resultsBox.firstElementChild) {
     resultsBox.removeChild(resultsBox.firstElementChild);
   }
 }
 
-function loadResults() {
+function load_results() {
   var query = document.getElementById("query");
   var n = document.getElementById("n-select");
   var filter_type = document.getElementById("filter-type");
-  var start_date = document.getElementById("start");
-  var end_date = document.getElementById("end");
   var level = document.getElementById("level");
   var domain = document.getElementById("domain");
 
@@ -57,8 +51,6 @@ function loadResults() {
     query: query.value,
     n: n.value,
     filter_type: filter_type.value,
-    start_date: start_date.value,
-    end_date: end_date.value,
     level: level.value,
     domain: domain.value
   };
@@ -80,7 +72,11 @@ function loadResults() {
       }
       response.json().then(function (data) {
         console.log(data);
-        addHtmlResults(data);
+        if (data[0].length == 0){
+          alert("No results. Please try again with a different query.");
+        }
+        else {add_html_results(data);
+        }
       });
     })
     .catch((error) => {
@@ -166,8 +162,14 @@ $(function () {
     disableTouchKeyboard: true
   });
 
+  // var collapseElementList = [].slice.call(document.querySelectorAll('.collapse'))
+  // var collapseList = collapseElementList.map(function (collapseEl) {
+  //   return new bootstrap.Collapse(collapseEl)
+  // })
+
+
   $("#submit-btn").on('click', () => {
-    loadResults();
+    load_results();
     return false;
   });
 });

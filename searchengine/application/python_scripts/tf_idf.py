@@ -5,28 +5,13 @@ import datetime
 import json
 from collections import Counter
 
+from  nltk.stem.snowball import FrenchStemmer
+
 text = "Le gouvernement va pouvoir continuer de mettre en place des restrictions pour faire face à la deuxième vague de coronavirus. Dans une ambiance souvent tendue, l’Assemblée nationale a voté samedi la prorogation de l’état d’urgence sanitaire jusqu’au 16 février. Le projet de loi, voté par 71 voix contre 35 en première lecture, est attendu au Sénat mercredi et devrait être adopté définitivement début novembre."
 
 text2 = "Les appels au boycott de produits français se sont multipliés samedi dans plusieurs pays du Moyen-Orient. L’Organisation de coopération islamique, qui réunit les pays musulmans, a déploré « les propos de certains responsable français susceptibles de nuire aux relations franco-musulmanes ». L’émoi a été suscité par les propos du président Emmanuel Macron, qui a promis de ne pas « renoncer aux caricatures » de Mahomet, interdites dans la religion musulmane. vague"
 
 text3 = "Cette année, Joe Biden a renvoyé Donald Trump dans son golf privé en prenant bientôt sa place à la Maison Blanche. L’Argentine est proche de légaliser l’avortement et Adèle Haenel s’est levée contre les violences faites aux femmes. Pour la première fois dans l’Union européenne, les énergies renouvelables ont produit plus d’électricité que les combustibles fossiles lors du premier semestre 2020. Tom Moor, un ancien capitaine de l'armée britannique centenaire a collecté près de 40 millions de livres pour le système hospitalier du Royaume-Uni, en marchant avec son déambulateur !"
-
-def read_data(path):
-    """ Returns 2D array as [[title, text, author, published, url], [title2, text2, author2, published2, url2]]"""
-
-    corpus = []
-
-    for i in os.listdir(path=path):
-        with open(f'{path}/{i}', 'r', encoding="utf8") as f:
-            full_data = f.read()
-            json_obj = json.loads(full_data)
-
-            if (json_obj['text'] != " "):
-                corpus.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(
-                    json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
-
-    return corpus
-
 
 class Corpus():
 
@@ -49,10 +34,10 @@ class Corpus():
         self.doc_ids.append(id)
         self.num_docs += 1
         if flag:
-            self.update_vocab(id)
+            self._update_vocab(id)
         
 
-    def update_vocab(self, doc_id):
+    def _update_vocab(self, doc_id):
 
         for i in self.documents:
             if i.id == doc_id:
@@ -63,7 +48,7 @@ class Corpus():
         self.vocab = sorted(self.vocab)
         self.len_vocab = len(self.vocab)
 
-    def calc_tf(self, doc):
+    def _calc_tf(self, doc):
 
         tf = [0] * self.len_vocab
         for index, token in enumerate(self.vocab):
@@ -76,7 +61,7 @@ class Corpus():
 
         return tf
 
-    def calc_idf(self):
+    def _calc_idf(self):
 
         df = [0] * self.len_vocab
         for i, token in enumerate(self.vocab):
@@ -89,18 +74,15 @@ class Corpus():
         idf = [0] * self.len_vocab
         for i, df in enumerate(df):
             idf[i] = math.log(self.num_docs / (df))
-
-        return idf
+        
+        self.idf_vec = idf
 
     def calc_tfidf(self):
 
-        self.tf_matrix = []
-        self.tf_idf = []
-
         for i in self.documents:
-            self.tf_matrix.append(self.calc_tf(i))
+            self.tf_matrix.append(self._calc_tf(i))
 
-        self.idf_vec = self.calc_idf()
+        self._calc_idf()
 
         for arr in self.tf_matrix:
             tfidf = []
@@ -109,7 +91,7 @@ class Corpus():
                 tfidf.append(tfidf_value)
             self.tf_idf.append(tfidf)
 
-    def get_query_tfidf(self, query):
+    def _calc_query_tfidf(self, query):
 
         q_tfidf = [0] * self.len_vocab
         counter = Counter(query.tokens)
@@ -134,7 +116,7 @@ class Corpus():
 
         return q_tfidf
 
-    def cosine_sim(self, vec1, vec2):
+    def _cosine_sim(self, vec1, vec2):
         dot = sum(i*j for i, j in zip(vec1, vec2))
         magnitude = math.sqrt(
             sum([val**2 for val in vec1])) * math.sqrt(sum([val**2 for val in vec2]))
@@ -143,35 +125,29 @@ class Corpus():
 
         return dot/magnitude
 
-    def compare_tfidfs(self, q_tfidf):
+    def _compare_tfidfs(self, q_tfidf):
 
         comparison_vec = {}
         for i in range(len(self.tf_idf)):
-            comparison_vec[i] = self.cosine_sim(q_tfidf, self.tf_idf[i])
+            comparison_vec[i] = self._cosine_sim(q_tfidf, self.tf_idf[i])
 
         return comparison_vec
 
-    def search_query(self, query):
+    def submit_query(self, query):
 
         query = Query(query)
-        q_tfidf = self.get_query_tfidf(query)
-        result = self.compare_tfidfs(q_tfidf)
+        q_tfidf = self._calc_query_tfidf(query)
+        result = self._compare_tfidfs(q_tfidf)
         print(result)
         result = {x:y for x,y in result.items() if y != 0}
-        # if all(i == 0 for i in result.values()):
-        #     return "No results"
-        # else:
+
         # TODO: even when both texts contain the word, both come up with 0, work out way to see if there are no matches
         # TODO: dataset scrapes whole page, so results come up if theres a refereenced article to another page with a teaser
 
         doc_ids = []
         res = sorted(result, key=result.get, reverse=True)
-        print(res)
-        print(len(res))
-        print(len(self.doc_ids))
-        for i in res:
-            doc_ids.append(self.doc_ids[i])
-
+        doc_ids = [self.doc_ids[i] for i in res]
+        
         return doc_ids
 
 
@@ -181,46 +157,55 @@ class Document():
 
         self.id = id
         self.title = title
+
+        if self.title:
+            self.processed_title = self._preprocess(title)
+
         self.raw_text = raw_text
-        self.clean_text = ''
-        self.tokens = set()
-        self.num_tokens = 0
+        self.clean_text = self._preprocess(raw_text)
+        self.tokens = self._get_tokens()
+        self.num_tokens = len(self.tokens)
 
-        self.preprocess_text()
-        self.get_tokens()
-
-    def remove_stopwords(self):
-        with open("application/tfidf/stop_words.txt", "r", encoding="utf-8") as f:
+    def _remove_stopwords(self, text):
+        with open("application/python_scripts/stop_words.txt", "r", encoding="utf-8") as f:
             stop_words = f.read().split("\n")[:-1]
 
         new_text = []
-        for i in self.clean_text:
+        for i in text:
             if i not in stop_words:
                 new_text.append(i)
 
-        self.clean_text = new_text
+        return new_text
 
-    def preprocess_text(self):
+    def _preprocess(self, raw_text):
+
+        stemmer = FrenchStemmer()
 
         punctuation = "!\"#$%&()*+…-.,/:;<=>?@[\\]^_«»{|}~\n“”€—–"
-        self.clean_text = self.raw_text.lower()
-        self.clean_text = re.sub('[%s]' % re.escape(
-            punctuation), '', self.clean_text)
-        self.clean_text = re.sub('\w*\d\w*', '', self.clean_text)
+        clean_text = raw_text.lower()
+        clean_text = re.sub('[%s]' % re.escape(
+            punctuation), '', clean_text)
+        clean_text = re.sub('\w*\d\w*', '', clean_text)
         # replaces ' with space
-        self.clean_text = re.sub("'", ' ', self.clean_text)
-        self.clean_text = re.sub('\n', '', self.clean_text)
-        self.clean_text = self.clean_text.split()
-        self.remove_stopwords()
+        clean_text = re.sub("'", ' ', clean_text)
+        clean_text = re.sub('\n', '', clean_text)
+        clean_text = clean_text.split()
+        clean_text = [stemmer.stem(i) for i in clean_text]
 
-    def get_tokens(self):
+        return self._remove_stopwords(clean_text)
+
+    def _get_tokens(self):
+
+        tokens = []
+
+        if self.title:
+            for i in self.processed_title:
+                tokens.append(i)
 
         for i in self.clean_text:
-            self.tokens.add(i)
-
-        self.num_tokens = len(self.tokens)
-
-    # TODO: get title tokens and add to list
+                tokens.append(i)
+        
+        return tokens
 
 
 class Query(Document):
@@ -233,8 +218,8 @@ class Query(Document):
 
 
 # c = Corpus()
-# c.add_document(1, 'one', text, True)
-# c.add_document(2, 'two', text2, True)
-# # c.add_document(3, 'three', text3, True)
+# c.add_document(1, 'situation de la gouvernement', text, True)
+# c.add_document(2, 'situation des musulmans', text2, True)
+# c.add_document(3, 'Donald Trump', text3, True)
 # c.calc_tfidf()
-# res = c.search_query("macron")
+# res = c.submit_query("macron")
