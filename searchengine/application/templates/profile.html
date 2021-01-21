@@ -9,10 +9,10 @@
     <div class="card-body">
       <!-- <i class="fa fa-user-circle-o" aria-hidden="true" ></i> -->
       <h5 class="card-title d-flex flex-row">{{ user.username | upper }}</h5>
-      <h6 class="card-text">You have {{ bookmarks | length }} bookmarked pages: </h6>
+      <h6 class="card-text" id="num"></h6>
       <!-- loop through and render all user's bookmark's onto the page  -->
       {% for i in bookmarks%}
-      <div class="card">
+      <div id="article" class="card">
         <div class="card-header">
           CEFR: {{ i.cefr }}
         </div>

@@ -139,7 +139,7 @@ function post_id(article_id, user_id, type) {
       }
       response.json().then(function (data) {
         // alert user of response of request
-        alert(data["message"])
+        // alert(data["message"])
         console.log(data);
       });
     })
@@ -163,7 +163,12 @@ function bookmark(article_id, user_id) {
     // icon is black, so post an "unbookmark" type request
     post_id(article_id, user_id, "unbookmark");
     // change icon to white
+    if (window.location.pathname == "/profile"){
+      el.closest(".card").remove();
+      set_num();
+    }
     icon.className = "fa fa-bookmark-o";
+
   };
 }
 
@@ -183,7 +188,7 @@ function bookmark(article_id, user_id) {
 
 function validate_db_query(body) {
   // if no filters and no query are selected alert user 
-  if (body["query"] == '' && body["level"] == ''  && body["author"] == ''){
+  if (body["query"] == '' && body["level"] == ''  && body["author"] == '' && body["filter_type"] == ''){
     alert("Please fill in the search query and/or filters. ")
     return false;
   } else {
@@ -203,9 +208,17 @@ function validate_current_query(body) {
 
 }
 
+function set_num(){
+   var num = document.getElementsByClassName("card").length - 1;
+   document.getElementById("num").innerHTML = `You have ${num} bookmarked pages`;
+}
+
 $(function () {
 
   // setBackground();
+  if (window.location.pathname == "/profile"){
+    set_num();
+  }
 
   $("[name='submit1']").on('click', () => {
     var type = "database";

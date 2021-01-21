@@ -4,7 +4,7 @@ import time
 import os 
 import datetime
 import requests
-from multiprocessing import Process
+from multiprocessing import Pool
 
 from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g, json, after_this_request
 from flaskthreads import AppContextThread 
@@ -76,7 +76,6 @@ def add_to_db(model_obj, **kwargs):
 
 def update_tfidf():
 
-    global C
     C = Corpus()
     articles = Article.query.all()
     for i in articles:
@@ -84,6 +83,7 @@ def update_tfidf():
 
     C.calc_tfidf()
     print("TF-IDF updated.")
+    return C
 
 
 @app.before_first_request
@@ -242,83 +242,87 @@ def upload():
         return make_response(jsonify(img), 200)
 
 
+def start_crawl(domain, n):
+    res = []
+
+    if domain == "20min":
+        article_dict = TwentyMinSpider().run(n)
+    elif domain == "figaro":
+        article_dict = FigaroSpider().run(n)
+    elif domain == "franceinfo":
+        article_dict = FranceInfoSpider().run(n)
+        
+    # calc cefr
+    flag = False
+    for i in article_dict:
+        article = Article.query.filter_by(url=i).first()
+        if not article:
+            flag = True
+            add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
+                        author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i)
+        else:
+            print(f"{article} already in DB.")
+
+    article_objs = Article.query.filter(Article.url.in_(article_dict.keys())).all()
+
+    return article_objs, flag
+
+def apply_filters(req):
+    ordering = []
+    if req['level']:
+        cefr_filter = case({req['level']: "0"}, value=Article.cefr, else_="1")
+        ordering.append(cefr_filter)
+
+    if req['author']:
+        author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
+        ordering.append(author_filter)  
+
+    if req["filter_type"]:
+        if req["filter_type"] == "newest":
+            date_filter = Article.published.desc()
+        elif req["filter_type"] == "oldest":
+            date_filter = Article.published.asc()
+        ordering.append(date_filter)
+    
+    article_objs = Article.query
+    if req["query"]:
+        doc_ids = C.submit_query(req['query'])
+        article_objs = article_objs.filter(Article.id.in_(doc_ids))
+    
+    if ordering:
+        article_objs = article_objs.order_by(*ordering)
+
+    return article_objs.all()
+
+def update():
+    global C
+    print("update started...")
+    start = time.perf_counter()
+    C = update_tfidf()
+    update_data_file()
+    finish = time.perf_counter()
+    print(f"Successfully updated in {round(finish-start,2)} second(s)")         
+
 @app.route('/_background', methods=['post'])
 def background():
-    def update():
-
-            print("update started...")
-            start = time.perf_counter()
-            update_tfidf()
-            update_data_file()
-            finish = time.perf_counter()
-            print(f"Successfully updated in {round(finish-start,2)} second(s)")
+    
 
     req = request.get_json()
     print(req)
     res = []
 
     if req["type"] == "current":
-        if req["domain"] == "20min":
-            article_dict = TwentyMinSpider().run(int(req['n']))
-        elif req["domain"] == "figaro":
-            article_dict = FigaroSpider().run(int(req['n']))
-        elif req["domain"] == "franceinfo":
-            article_dict = FranceInfoSpider().run(int(req['n']))
-
-        print(article_dict)
-        # calc cefr
-        flag = False
-        for i in article_dict:
-            article = Article.query.filter_by(url=i).first()
-            if not article:
-                flag = True
-                add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
-                          author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i)
-            else:
-                print(f"{article} already in DB.")
-
-        article_objs = Article.query.filter(Article.url.in_(article_dict.keys())).all()
-        print("Article_objs: ", article_objs)
-        for i in article_objs:
-            doc = i.as_dict()
-            doc['text'] = doc['text'][:197]
-            res.append(doc)
-
+        article_objs, flag = start_crawl(req["domain"], int(req["n"]))
         if flag: 
             thread = AppContextThread(target=update).start()
-        # p = Process(target=update)
-        # p.start()
-            
-    elif req["type"] == "database":
-        ordering = []
-        if req['level']:
-            cefr_filter = case({req['level']: "0"}, value=Article.cefr, else_="1")
-            ordering.append(cefr_filter)
-
-        if req['author']:
-            author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
-            ordering.append(author_filter)  
-
-        if req["filter_type"]:
-            if req["filter_type"] == "newest":
-                date_filter = Article.published.desc()
-            elif req["filter_type"] == "oldest":
-                date_filter = Article.published.asc()
-            ordering.append(date_filter)
         
-        article_objs = Article.query
-        if req["query"]:
-            doc_ids = C.submit_query(req['query'])
-            article_objs = article_objs.filter(Article.id.in_(doc_ids))
+    else:
+        article_objs = apply_filters(req)
         
-        if ordering:
-            article_objs = article_objs.order_by(*ordering)
-
-        article_objs = article_objs.all()
-        for i in article_objs[:int(req['n'])]:
-            doc = i.as_dict()
-            doc['text'] = doc['text'][:197]
-            res.append(doc)
+    for i in article_objs[:int(req['n'])]:
+        doc = i.as_dict()
+        doc['text'] = doc['text'][:197]
+        res.append(doc)
 
     return make_response(jsonify(res, 200))
 
