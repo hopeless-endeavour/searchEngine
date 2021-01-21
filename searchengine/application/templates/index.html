@@ -7,77 +7,83 @@
 <div class="view">
   <div class="search-box">
     <h2>French News Search Engine</h2>
-    <form method="post">
-      <div class="flex-box">
-        <div class='filters card '>
-          <h5>Filters:</h5>
-          <div class="form-group">
-            <p>Size of DB: {{ n_articles}}</p>
-            <select class="form-control custom-select" id="n-select" required>
-              <option value="" disabled hidden selected> Number of returns</option>
-              {% for i in range(1, 11) %}
-                <option value="{{i}}">{{i}} </option>
-              {% endfor %}
-            </select>
-          </div>
-          
-          <!-- <div class="form-group input-daterange"> <input type="text" id="start" class="form-control"> <label class="form-control-placeholder" id="start-p" for="start">Start Date</label> <span class="fa fa-calendar" id="fa-1"></span> <input type="text" id="end" class="form-control"> <label class="form-control-placeholder" id="end-p" for="end">End Date</label> <span class="fa fa-calendar" id="fa-2"></span> 
-          </div> -->
-          <div class="form-group">
-            <select class="form-control custom-select" id="filter-type">
-              <option value="" disabled hidden selected>Filter by:</option>
-              <option value="relevance">Relevance</option>
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <select class="form-control custom-select" id="level">
-              <option value="" disabled hidden selected>Select level:</option>
-              {% for key,value in n_cefrs.items() %}
-                {% if value == 0 %}
-                  <option value="{{key}}" disabled>{{key}} ({{value}})</option>
-                {% else %}
-                  <option value="{{key}}" style='font-weight: bolder;'>{{key}} ({{value}})</option> 
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
-            <select class="form-control custom-select" id="author">
-              <option value="" disabled hidden selected>Published by:</option>
-              {% for i in authors %}
-              <option value="{{ i }}">{{ i }}</option>
-              {% endfor %}
-            </select>
-          </div>
+    <div class="flex-box">
+      <div class='filters card '>
+        <h5>Filters:</h5>
+        <div class="form-group">
+          <p>Number of articles: {{ n_articles}}</p>
+          <select class="form-control custom-select" id="n-select">
+            <option value="5" disabled hidden selected> Number of returns</option>
+            {% for i in range(1, 11) %}
+            <option value="{{i}}">{{i}} </option>
+            {% endfor %}
+          </select>
         </div>
-        <div class="flex-box2">
-          <div class="query-form">
-            <div class="form-group input-group">
-              <input type="text" id="query" class="form-control" placeholder="Search..." >
-            </div>
-            <div class="alert alert-light" style="margin-left: 5px; margin-right: 5px; height: 38px; padding-top: 6px;" role="alert">
-              <strong>OR</strong>
-            </div>
-            <div class="form-group site-select">
-              <select class="form-contorl custom-select" id="domain">
-                <option value="" disabled hidden selected>Get current news from...</option>
-                <option value="20min">20minutes.fr</option>
-                <option value="figaro">lefigaro.fr</option>
-                <option value="franceinfo">francetvinfo.fr</option>
-              </select>
-            </div>
-            <div>
-              <button id="submit-btn" class="btn btn-outline-light search-btn" type="submit"><i class="fa fa-search"></i></button>
-            </div>
-          </div>
+        <div class="form-group">
+          <!-- filter choices  -->
+          <select class="form-control custom-select" id="filter-type">
+            <option value="" disabled hidden selected>Filter by:</option>
+            <option value="relevance">Relevance</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <!-- cefr filter  -->
+          <select class="form-control custom-select" id="level">
+            <option value="" disabled hidden selected>Select level:</option>
+            {% for key,value in n_cefrs.items() %}
+            {% if value == 0 %}
+            <option value="{{key}}" disabled>{{key}} ({{value}})</option>
+            {% else %}
+            <option value="{{key}}" style='font-weight: bolder;'>{{key}} ({{value}})</option>
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <!-- author filter -->
+          <select class="form-control custom-select" id="author">
+            <option value="" disabled hidden selected>Published by:</option>
+            {% for i in authors %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
-    </form>
-    <div id="results-box"></div>
+      <div class="flex-box2">
+        <div class="query-form">
+          <div class="form-group">
+            <input type="text" id="query" class="form-control query" placeholder="Search...">
+          </div>
+          <div>
+            <button name="submit1" class="btn btn-outline-light search-btn" type="submit"><i
+                class="fa fa-search"></i></button>
+          </div>
+          <div class="alert alert-light" style="margin-left: 8px; margin-right: 5px; height: 38px; padding-top: 6px;"
+            role="alert">
+            <strong>OR</strong>
+          </div>
+          <!-- select current news option -->
+          <div class="form-group site-select">
+            <select class="form-control custom-select" id="domain">
+              <option value="" disabled hidden selected>Get current news from...</option>
+              <option value="20min">20minutes.fr</option>
+              <option value="figaro">lefigaro.fr</option>
+              <option value="franceinfo">francetvinfo.fr</option>
+            </select>
+          </div>
+          <div>
+            <button name="submit2" class="btn btn-outline-light search-btn" type="submit"><i
+                class="fa fa-search"></i></button>
+          </div>
+        </div>
+        <!-- results from a search will be appended to the div below  -->
+        <div id="results-box"></div>
+      </div>
+    </div>
     {% if session['user_id'] %}
-      <p id='user_id' type='hidden'>{{session['user_id']}}</p>
+    <p id='user_id' type='hidden'>{{session['user_id']}}</p>
     {% endif %}
   </div>
 </div>

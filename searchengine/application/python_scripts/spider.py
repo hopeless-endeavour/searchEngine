@@ -1,16 +1,18 @@
+import datetime
+import re
 from random import randint
 from requests import get
-from contextlib import closing
-import re
 from requests.exceptions import RequestException
+from contextlib import closing
+
 from bs4 import BeautifulSoup as bs
-import datetime
-import random
+
 
 
 class Spider:
 
     def __init__(self, seed):
+
         self.seed = seed 
         self.adj_graph = {}
         
@@ -22,7 +24,14 @@ class Spider:
         return (resp.status_code == 200
                 and content_type is not None
                 and content_type.find("html") > -1)
+    
+    def _check_url(self, url):
+        """ Validates url. Returns correct url. """
 
+        if "http" not in url:  # doesn't add invalid href's
+            return f"{self.seed}{url}"
+        else:
+            return url
 
     def _get_content(self, url):
         """Requests content of url. If invalid reponse, returns None."""
@@ -40,52 +49,77 @@ class Spider:
             return None
 
     def _crawl(self, url):
+        """ Crawls content of given url. """
+
         print(f"crawling {url}")
 
-        return {"title": "title", "content": "text", "author": "author", "published": "date_pub", "links": [random.randint(0,15)  for i in range(4)]}
+         # find title
+        title = soup.find("title").text
+
+        # scrape text from page
+        text = ''
+        for i in soup.find_all(['p','h1']):
+            text += "\n" + i.text
+
+        # _crawl page for links to other articles
+        links = []
+        urls = soup.find_all("a")
+        for i in urls:
+            links.append(self._check_url(i.get("href")))
+
+        return {"title": "title", "content": text, "links": links}
     
     def _get_initial_links(self):
+        """ Gets initial links on seed domain, returns as initial queue. """
 
-        # content = self._get_content(self.seed)
-        # soup = bs(content, "html.parser")
-        # urls = soup.find_all('a')
-        # for i in urls:
-        #     self.queue.append(self._check_url(i.get('href')))
+        queue = []
+        content = self._get_content(self.seed)
+        soup = bs(content, "html.parser")
+        urls = soup.find_all('a')
+        for i in urls:
+            queue.append(self._check_url(i.get('href')))
 
-        return [random.randint(0,20) for i in range(15)]
-
-    def _check_url(self, url):
-
-        if "http" not in url:  # doesn't add invalid href's
-            return f"{self.seed}{url}"
-        else:
-            return url
-        
+        return queue      
 
     def _bfs(self, queue, visited, depth):
+        """ Recursive breadth first search """
 
         if not queue:
             print("Queue is empty.")
-            return self.adj_graph
+            return 
         
         if depth > 0:
-            v = queue.pop(0)
-            self.adj_graph[v] = self._crawl(v)
-            visited.append(v)
-            print(f"visited: {visited}, depth: {depth}")
-            for u in self.adj_graph[v]["links"]:
-                if u not in self.adj_graph and u not in queue:
-                    queue.append(u)
+            # set current node to first item in queue, and remove from queue
+            current_node = queue.pop(0)
+            url_dict = self._crawl(current_node)
+            print(f"current node: {current_node}, url_dict: {url_dict}, depth: {depth}")
+            # if not url_dict, the node couldn't be crawled
+            if url_dict:
+                    # add crawled node to adj_graph
+                    self.adj_graph[current_node] = url_dict
+                    # add all the links from the current node into the queue
+                    for u in self.adj_graph[current_node]["links"]:
+                        # only add to queue if it hasn't already been crawled and isn't in the queue already
+                        if u not in self.adj_graph and u not in queue:
+                            queue.append(u)
+
+            # add current node to visited list 
+            visited.append(current_node)
+            print(f"visited: {visited}")
+            
             print(f"queue at depth {depth}: {queue}")
+            # call self with a depth - 1 
             self._bfs(queue, visited, depth-1)
         else:
             print("Depth is 0.")
-            return self.adj_graph
+            return 
 
     def run(self, depth):
 
+        # initialise queue 
         queue = self._get_initial_links()
-        # print(f"inital queue: {queue}")
+        print(f"inital queue: {queue}")
+        # call first occurance of bfs to start crawl with empty visited list []
         self._bfs(queue, [], depth)
         return self.adj_graph
 
@@ -99,12 +133,17 @@ class TwentyMinSpider(Spider):
 
         queue = []
         content = self._get_content(self.seed)
-        soup = bs(content, "html.parser")
-        articles = soup.find("div", {'id': "page-content"}).find_all('article')
-        for i in articles:
-            queue.append(self._check_url(i.find('a').get('href')))
 
-        return queue
+        if content:
+            soup = bs(content, "html.parser")
+            articles = soup.find("div", {'id': "page-content"}).find_all('article')
+            for i in articles:
+                queue.append(self._check_url(i.find('a').get('href')))
+
+            return queue
+
+        else:
+            return None
 
     def _crawl(self, url):
         
@@ -112,6 +151,10 @@ class TwentyMinSpider(Spider):
 
         # get html from page 
         content = self._get_content(url)
+
+        if not content:
+            return None 
+
         soup = bs(content, "html.parser")
 
         # find date published 
@@ -133,7 +176,7 @@ class TwentyMinSpider(Spider):
         
         # scrape text from page
         text = ''
-        for i in soup.find('div', class_='content').find_all('p'):
+        for i in soup.find('div', class_='content').find_all(['p','h1']):
             text += "\n" + i.text
 
         # crawl page for links to other articles
@@ -193,8 +236,11 @@ class FigaroSpider(Spider):
         
         # scrape text from page
         text = ''
-        for i in soup.find('article', class_=['fig-main', 'node-article']).find_all(['p', 'h2']):
-            text += i.text
+        try:
+            for i in soup.find('article', class_=['fig-main', 'node-article']).find_all(['p', 'h2']):
+                text += "\n" + i.text
+        except:
+            return None
 
         # _crawl page for links to other articles
         links = []
@@ -202,7 +248,10 @@ class FigaroSpider(Spider):
         for i in urls:
             links.append(self._check_url(i.get("href")))
 
-        return {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+        url_dict = {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+
+        return url_dict
+
 
 
 class FranceInfoSpider(Spider):
@@ -256,9 +305,9 @@ class FranceInfoSpider(Spider):
         # scrape text from page
         text = ''
         for i in soup.find('article', class_=['page-content', re.compile("content*")]).find_all(['p', 'h2']):
-            text += i.text
+            text += "\n" + i.text
 
-        # _crawl page for links to other articles
+        # crawl page for links to other articles
         links = []
         if soup.find("ul", class_="same-topic__items"):
             articles = soup.find("ul", class_="same-topic__items").find_all("article")
@@ -270,4 +319,6 @@ class FranceInfoSpider(Spider):
                 links.append(self._check_url(i.get("href")))
         print(links)
 
-        return {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+        url_dict = {"title": title, "content": text, "author": author, "published": date_pub, "links": links}
+
+        return url_dict

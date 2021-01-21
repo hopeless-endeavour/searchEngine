@@ -1,12 +1,15 @@
 const resultsBox = document.getElementById("results-box");
 
 function add_html_results(results) {
+  // clear results before adding new results 
   clear_results();
 
+  // convert results into html 
   var htmltoAppend = results[0].map((result) => {
 
     var user_id = document.getElementById('user_id');
 
+    // if user is logged in display bookmark icon, otherwise don't display it 
     if (user_id == null) {
       var user_id = null;
       var button = '';
@@ -31,35 +34,46 @@ function add_html_results(results) {
     </div>
     `;
   }).join('');
+
+  // add html results to results box 
   resultsBox.innerHTML = htmltoAppend;
 }
 
 function clear_results() {
+  // loops through and removes all elements in results box 
   while (resultsBox.firstElementChild) {
     resultsBox.removeChild(resultsBox.firstElementChild);
   }
 }
 
-function load_results() {
-  var query = document.getElementById("query");
-  var n = document.getElementById("n-select");
-  var filter_type = document.getElementById("filter-type");
-  var level = document.getElementById("level");
-  var domain = document.getElementById("domain");
+function create_body(type){
+  // create body depending on the type of request
+  if (type == "database") {
+    var body = {
+      type: type,
+      query: document.getElementById("query").value,
+      n: document.getElementById("n-select").value,
+      filter_type: document.getElementById("filter-type").value,
+      author: document.getElementById("author").value,
+      level: document.getElementById("level").value
+    };
+  } else if (type == "current") {
+    var body = {
+      type: type,
+      n: document.getElementById("n-select").value,
+      domain: document.getElementById("domain").value
+    };
+  }
+  return body;
+}
 
-  var entry = {
-    query: query.value,
-    n: n.value,
-    filter_type: filter_type.value,
-    level: level.value,
-    domain: domain.value
-  };
+function post_query(body) {
 
-
+  // send post request to back end 
   fetch(`${window.origin}/_background`, {
     method: "POST",
     credentials: "include",
-    body: JSON.stringify(entry),
+    body: JSON.stringify(body),
     cache: "no-cache",
     headers: new Headers({
       "content-type": "application/json"
@@ -67,19 +81,24 @@ function load_results() {
   })
     .then((response) => {
       if (response.status !== 200) {
+        // catch if back end process failed 
         console.log(`Error. Status code: ${response.status}`);
         return;
       }
       response.json().then(function (data) {
         console.log(data);
-        if (data[0].length == 0){
+        // checks if there are no results 
+        if (data[0].length == 0) {
           alert("No results. Please try again with a different query.");
         }
-        else {add_html_results(data);
+        else {
+          // calls function to render results 
+          add_html_results(data);
         }
       });
     })
     .catch((error) => {
+      // catch if request failed 
       console.log("Fetch error: " + error);
     });
 }
@@ -95,59 +114,92 @@ function setBackground() {
 
 function post_id(article_id, user_id, type) {
 
-  var entry = {
+  // create body of request 
+  var body = {
     'article_id': article_id,
     'user_id': user_id,
     'type': type
   };
 
+  // send a post request to back end 
   fetch(`${window.origin}/_bookmark`, {
     method: "POST",
     credentials: "include",
-    body: JSON.stringify(entry),
+    body: JSON.stringify(body),
     cache: "no-cache",
     headers: new Headers({
       "content-type": "application/json"
     })
   })
     .then((response) => {
+      // catch if back end process failed 
       if (response.status !== 200) {
         console.log(`Error. Status code: ${response.status}`);
         return;
       }
       response.json().then(function (data) {
+        // alert user of response of request
+        alert(data["message"])
         console.log(data);
       });
     })
     .catch((error) => {
+      // catch if request failed 
       console.log("Fetch error: " + error);
     });
 }
 
 function bookmark(article_id, user_id) {
+  // get the article clicked by the user
   var el = document.getElementById(article_id);
+  // get the bookmark icon
   var icon = el.childNodes[0]
-  console.log(user_id);
+  // if icon is white (bookark-o), post a "bookmark" type request 
   if (icon.className == "fa fa-bookmark-o") {
     post_id(article_id, user_id, "bookmark");
+    // change icon to black
     icon.className = "fa fa-bookmark";
   } else {
+    // icon is black, so post an "unbookmark" type request
     post_id(article_id, user_id, "unbookmark");
+    // change icon to white
     icon.className = "fa fa-bookmark-o";
   };
 }
 
-function translate_text() {
-  var textarea = document.getElementsByTagName('p');
-  var selectedtext = '';
+// function translate_text() {
+//   var textarea = document.getElementsByTagName('p');
+//   var selectedtext = '';
 
-  if (document.getSelection) {
-    selectedtext = document.getSelection().toString();
-    console.log(selectedtext);
-    // post request to translation api 
-    // render results 
-    }
-  else return;
+//   if (document.getSelection) {
+//     selectedtext = document.getSelection().toString();
+//     console.log(selectedtext);
+//     // post request to translation api 
+//     // render results 
+//   }
+//   else return;
+
+// }
+
+function validate_db_query(body) {
+  // if no filters and no query are selected alert user 
+  if (body["query"] == '' && body["level"] == ''  && body["author"] == ''){
+    alert("Please fill in the search query and/or filters. ")
+    return false;
+  } else {
+    return true;
+  }
+
+}
+
+function validate_current_query(body) {
+  // check that a domain is selected 
+  if (body["domain"] == ''){
+    alert("Please select a news site. ")
+    return false;
+  } else {
+    return true;
+  }
 
 }
 
@@ -155,21 +207,23 @@ $(function () {
 
   // setBackground();
 
-  $('.input-daterange').datepicker({
-    format: 'dd-mm-yyyy',
-    autoclose: true,
-    clearBtn: true,
-    disableTouchKeyboard: true
+  $("[name='submit1']").on('click', () => {
+    var type = "database";
+    console.log(type);
+    var body = create_body(type);
+    if (validate_db_query(body)){
+      post_query(body);
+    }
+    return false;
   });
 
-  // var collapseElementList = [].slice.call(document.querySelectorAll('.collapse'))
-  // var collapseList = collapseElementList.map(function (collapseEl) {
-  //   return new bootstrap.Collapse(collapseEl)
-  // })
-
-
-  $("#submit-btn").on('click', () => {
-    load_results();
+  $("[name='submit2']").on('click', () => {
+    var type = "current";
+    console.log(type);
+    var body = create_body(type);
+    if (validate_current_query(body)){
+      post_query(body);
+    }
     return false;
   });
 });

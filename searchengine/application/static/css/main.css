@@ -56,6 +56,7 @@ p {
 
 .card-text{
   margin-top: 10px;
+  white-space: pre-line;
 }
 
 .card-title{
@@ -74,45 +75,40 @@ p {
   flex-direction: column;
   padding: 10px;
   margin-top: 0px;
-  width: 250px;
-  height: 400;
+  width: 15%;
+  height: 10%;
   margin-right: 0%;
 }
 
 .flex-box {
-  display: inline-flex;
+  display: flex;
   flex-direction: row;  
-  justify-content: centre;
-  width: 80%;
+  justify-content: left;
+  width: 90%;
   margin-left: 10%;
-}
-
-.auth{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.query-form{
-  display: flex;
-  flex-direction: row;
-  margin-left: 5px;
-  
+  margin-right: 10%;
 }
 
 .flex-box2 {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  flex-grow: 3;
+  margin-left: 6px;
+  width: 80%;
+}
+
+.query-form{
+  display: flex;
+  flex-direction: row;
+  margin-left: inherit;
+  /* width: inherit%; */
+
+}
+.query{
+  width: 700px;
 }
 
 .search-btn{
   margin-left: 5px;
-}
-
-.site-select{
-  width: 500px;
 }
 
 #profile {
@@ -120,5 +116,21 @@ p {
   margin-right: 10%;
 }
 
-/* TODO: center align .auth-btn 
-/* TODO: style bookmark button, increase size, move up 
+#results-box {
+  margin: inherit;
+  margin-right: 10%;
+}
+
+.auth{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.auth-btn{
+  margin: 5px;
+  width: 100%;
+}
+
+.auth-group{
+  margin: 5px;
+}

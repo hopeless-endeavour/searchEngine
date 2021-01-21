@@ -28,6 +28,7 @@ class Corpus():
         self.tf_idf = []
 
     def add_document(self, id, title, text, flag):
+        """ Creates and adds document objects into the documents list """
 
         new_doc = Document(id, title, text)
         self.documents.append(new_doc)
@@ -38,6 +39,7 @@ class Corpus():
         
 
     def _update_vocab(self, doc_id):
+        """ Adds any new words from the given document to the corpus vocab list """
 
         for i in self.documents:
             if i.id == doc_id:
@@ -49,6 +51,7 @@ class Corpus():
         self.len_vocab = len(self.vocab)
 
     def _calc_tf(self, doc):
+        """ Calculates tf vector for a given document against the whole corpus vocab """
 
         tf = [0] * self.len_vocab
         for index, token in enumerate(self.vocab):
@@ -62,22 +65,24 @@ class Corpus():
         return tf
 
     def _calc_idf(self):
+        """ Calculates idf vector for every word in the corpus vocab """
 
-        df = [0] * self.len_vocab
+        # first calculate df
+        self.df_vec = [0] * self.len_vocab
         for i, token in enumerate(self.vocab):
             for doc in self.documents:
                 if token in doc.tokens:
-                    df[i] += 1
+                    self.df_vec[i] += 1
 
-        self.df_vec = df
-
-        idf = [0] * self.len_vocab
-        for i, df in enumerate(df):
-            idf[i] = math.log(self.num_docs / (df))
+        # then calculate idf 
+        self.idf_vec = [0] * self.len_vocab
+        for i, df in enumerate(self.df_vec):
+            self.idf_vec[i] = math.log(self.num_docs / (df))
         
-        self.idf_vec = idf
+        return 
 
     def calc_tfidf(self):
+        """ Calculates the tf-idf matrix for the whole corpus """
 
         for i in self.documents:
             self.tf_matrix.append(self._calc_tf(i))
@@ -92,6 +97,7 @@ class Corpus():
             self.tf_idf.append(tfidf)
 
     def _calc_query_tfidf(self, query):
+        """ Calculates the tf-idf of the query for every word in the corpus vocab. """
 
         q_tfidf = [0] * self.len_vocab
         counter = Counter(query.tokens)
@@ -117,6 +123,8 @@ class Corpus():
         return q_tfidf
 
     def _cosine_sim(self, vec1, vec2):
+        """ Calculates the cosine similarity of two given vectors. """
+
         dot = sum(i*j for i, j in zip(vec1, vec2))
         magnitude = math.sqrt(
             sum([val**2 for val in vec1])) * math.sqrt(sum([val**2 for val in vec2]))
@@ -126,6 +134,7 @@ class Corpus():
         return dot/magnitude
 
     def _compare_tfidfs(self, q_tfidf):
+        """ Compates the tf-idf matrix of the corpus to that of the query. """
 
         comparison_vec = {}
         for i in range(len(self.tf_idf)):
@@ -134,18 +143,23 @@ class Corpus():
         return comparison_vec
 
     def submit_query(self, query):
+        """ Takes a query and calls all the appropriate methods to find the most similar documents in the corpus """
 
         query = Query(query)
         q_tfidf = self._calc_query_tfidf(query)
         result = self._compare_tfidfs(q_tfidf)
         print(result)
+
+        # if any results are 0, remove them 
         result = {x:y for x,y in result.items() if y != 0}
 
         # TODO: even when both texts contain the word, both come up with 0, work out way to see if there are no matches
         # TODO: dataset scrapes whole page, so results come up if theres a refereenced article to another page with a teaser
-
+        
         doc_ids = []
+        # sort the results by the highest similarity 
         res = sorted(result, key=result.get, reverse=True)
+        # get the correct document ids of the resulting documents 
         doc_ids = [self.doc_ids[i] for i in res]
         
         return doc_ids
@@ -157,7 +171,6 @@ class Document():
 
         self.id = id
         self.title = title
-
         if self.title:
             self.processed_title = self._preprocess(title)
 
@@ -167,6 +180,8 @@ class Document():
         self.num_tokens = len(self.tokens)
 
     def _remove_stopwords(self, text):
+        """ Removes stopwords from given text. """
+
         with open("application/python_scripts/stop_words.txt", "r", encoding="utf-8") as f:
             stop_words = f.read().split("\n")[:-1]
 
@@ -178,6 +193,7 @@ class Document():
         return new_text
 
     def _preprocess(self, raw_text):
+        """ Parses given raw text. Returns a list of words. """
 
         stemmer = FrenchStemmer()
 
@@ -195,6 +211,7 @@ class Document():
         return self._remove_stopwords(clean_text)
 
     def _get_tokens(self):
+        """ Gets all the individual words/tokens from the objects title and text. Returns list of tokens.  """
 
         tokens = []
 
@@ -211,6 +228,7 @@ class Document():
 class Query(Document):
     def __init__(self, query):
         # give queries an id? Keep track of user queries?
+        # initialise query from parent document, but without title or id 
         super().__init__(id=None, title=None, raw_text=query)
 
     def spell_check(self):

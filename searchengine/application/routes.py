@@ -4,9 +4,11 @@ import time
 import os 
 import datetime
 import requests
+from multiprocessing import Process
 
 from flask import Flask, render_template, jsonify, request, make_response, redirect, url_for, session, flash, g, json, after_this_request
 from flaskthreads import AppContextThread 
+from sqlalchemy import func, case, text
 from flask import current_app as app
 from passlib.hash import sha256_crypt
 
@@ -108,15 +110,20 @@ def before_first_request():
         update_data_file()
 
 
-@app.route('/', methods=['post', 'get'])
+@app.route('/', methods=['get', 'post'])
 def index():
 
     n_cefrs = {'A1': 0, 'A2': 0, 'B1': 0, 'B2': 0, 'C1': 0, 'C2': 0, "Unknown": 0}
-    authors = [i[0] for i in db.session.query(Article.author).order_by(Article.author).distinct().all()] # gets all the authors in the db
-    n_articles = Article.query.count() # gets number of articles in the db
-
-    for key, value in n_cefrs.items():
-        n_cefrs[key] = Article.query.filter_by(cefr=key).count()
+    # gets all distinct authors in the db
+    authors = [i[0] for i in db.session.query(Article.author).order_by(Article.author).distinct().all()] 
+    # gets number of articles in the db
+    n_articles = Article.query.count() 
+    # get how many articles have each level of cefr
+    cefrs = db.session.query(func.count(Article.id), Article.cefr).group_by(Article.cefr).all()
+    for count, cefr in cefrs: 
+        if cefr in n_cefrs:
+            n_cefrs[cefr] = count 
+    
 
     return render_template('index.html', n_articles=n_articles, n_cefrs=n_cefrs, authors=authors)
 
@@ -125,19 +132,21 @@ def index():
 def register():
 
     if request.method == 'POST':
+        # ensures no user is in the session 
         session.pop('user_id', None)
 
+        # get form information 
         username = request.form.get('username')
         password = request.form.get('password')
 
+        # check if username is already taken
         user_obj = User.query.filter_by(username=username).first()
-        print(user_obj)
         if user_obj:
             flash("Username taken")
             return redirect(url_for('register'))
         else:
-            add_to_db(User, username=username, password=sha256_crypt.hash(password))
-
+            add_to_db(User, username=username, password=sha256_crypt.hash(password)) # hash user's password 
+            
             return redirect(url_for('login'))
 
     return render_template('register.html')
@@ -147,14 +156,19 @@ def register():
 def login():
 
     if request.method == 'POST':
+        # ensures no user is already in the session 
         session.pop('user_id', None)
 
+        # get form information
         username = request.form.get('username')
         password = request.form.get('password')
 
+        # checks if userrname exists in the users table 
         user_obj = User.query.filter_by(username=username).first()
         if user_obj:
+            # verify password hashes are the same 
             if sha256_crypt.verify(password, user_obj.password):
+                # add user to the session 
                 session['user_id'] = user_obj.id
                 print(session)
                 return redirect(url_for('profile'))
@@ -168,16 +182,13 @@ def login():
 
 @app.route('/profile', methods=['post', 'get'])
 def profile():
-
-    if session.get('user_id', None) is not None:
+    
+    # if there is user in the session find their bookmarks from the DB, otherwise redirect to login
+    if session.get('user_id', None) :
         user_id = session['user_id']
         print(session)
         user = User.query.filter_by(id=user_id).first()
-        ua = UserArticle.query.filter_by(user_id=user_id).all()
-        bookmarks = []
-        for i in ua:
-            bookmarks.append(Article.query.filter_by(id=i.article_id).first())
-        print(bookmarks)
+        bookmarks = db.session.query(Article).join(UserArticle).join(User).filter(User.id == user_id).all()
         return render_template('profile.html', user=user, bookmarks=bookmarks)
     else:
         flash("No username found in session")
@@ -186,7 +197,8 @@ def profile():
 
 @app.route('/view_article/<article_id>', methods=['post', 'get'])
 def view_article(article_id):
-
+    
+    # get appropriate article from DB using article id passed into the route url
     article = Article.query.filter_by(id=article_id).first()
     return render_template('view_article.html', article=article, article_id=int(article_id))
 
@@ -194,6 +206,7 @@ def view_article(article_id):
 @app.route('/logout', methods=['post', 'get'])
 def logout():
 
+    # remove user from session 
     session.pop('user_id', None)
     flash("Logged Out")
 
@@ -244,7 +257,7 @@ def background():
     print(req)
     res = []
 
-    if req["domain"] != '' and req['query'] == '':
+    if req["type"] == "current":
         if req["domain"] == "20min":
             article_dict = TwentyMinSpider().run(int(req['n']))
         elif req["domain"] == "figaro":
@@ -252,11 +265,13 @@ def background():
         elif req["domain"] == "franceinfo":
             article_dict = FranceInfoSpider().run(int(req['n']))
 
-        print(article_dict.keys())
+        print(article_dict)
         # calc cefr
+        flag = False
         for i in article_dict:
             article = Article.query.filter_by(url=i).first()
             if not article:
+                flag = True
                 add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
                           author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i)
             else:
@@ -269,20 +284,37 @@ def background():
             doc['text'] = doc['text'][:197]
             res.append(doc)
 
-        thread = AppContextThread(target=update).start()
+        if flag: 
+            thread = AppContextThread(target=update).start()
+        # p = Process(target=update)
+        # p.start()
             
-    else:
-        doc_ids = C.submit_query(req['query'])
-        if req["filter_type"] == "newest":
-            article_objs = Article.query.filter(Article.id.in_(doc_ids)).order_by(Article.published.desc()).all()
-        elif req["filter_type"] == "oldest":
-            article_objs = Article.query.filter(Article.id.in_(doc_ids)).order_by(Article.published.asc()).all()
-        else:
-            article_objs = Article.query.filter(Article.id.in_(doc_ids)).all()
+    elif req["type"] == "database":
+        ordering = []
+        if req['level']:
+            cefr_filter = case({req['level']: "0"}, value=Article.cefr, else_="1")
+            ordering.append(cefr_filter)
+
+        if req['author']:
+            author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
+            ordering.append(author_filter)  
+
+        if req["filter_type"]:
+            if req["filter_type"] == "newest":
+                date_filter = Article.published.desc()
+            elif req["filter_type"] == "oldest":
+                date_filter = Article.published.asc()
+            ordering.append(date_filter)
         
-        print("articles by cefr: ", Article.query.filter(Article.cefr=="A1").all())
+        article_objs = Article.query
+        if req["query"]:
+            doc_ids = C.submit_query(req['query'])
+            article_objs = article_objs.filter(Article.id.in_(doc_ids))
+        
+        if ordering:
+            article_objs = article_objs.order_by(*ordering)
 
-
+        article_objs = article_objs.all()
         for i in article_objs[:int(req['n'])]:
             doc = i.as_dict()
             doc['text'] = doc['text'][:197]
@@ -292,8 +324,9 @@ def background():
 
 
 @app.route('/_bookmark', methods=['get', 'post'])
-def bookmarkPage():
+def bookmark_page():
 
+    # receive request from js front end 
     req = request.get_json()
     print('Request: ', req)
     print('User_id: ', req['user_id'])
@@ -301,22 +334,25 @@ def bookmarkPage():
     user_id = req['user_id']
     article_id = req["article_id"]
 
+    # if the type of request is "bookmark" add record to user_article table 
     if req["type"] == "bookmark":
         try:
             add_to_db(UserArticle, article_id=article_id, user_id=user_id)
-            res = make_response(jsonify({"message": "bookmarked"}), 200)
+            res = make_response(jsonify({"message": "Successfully bookmarked"}), 200)
         except:
             res = make_response(
-                jsonify({"message": "already bookmarked"}), 200)
+                jsonify({"message": "Already bookmarked"}), 200)
+
+    # if the type is "unbookmark" delete appropriate record from user_article table
     else:
         try:
             bookmark = UserArticle.query.filter_by(
                 user_id=user_id, article_id=article_id).first()
             db.session.delete(bookmark)
             db.session.commit()
-            res = make_response(jsonify({"message": "unbookmarked"}), 200)
+            res = make_response(jsonify({"message": "Successfully unbookmarked"}), 200)
         except Exception as e:
             print(e.message, e.args)
-            res = make_response(jsonify({"message": "not ok"}), 500)
+            res = make_response(jsonify({"message": "Error: {e.message}" }), 500)
 
     return res
