@@ -148,7 +148,7 @@ class Corpus():
         query = Query(query)
         q_tfidf = self._calc_query_tfidf(query)
         result = self._compare_tfidfs(q_tfidf)
-        print(result)
+        print(f"Similarity matrix: {result}")
 
         # if any results are 0, remove them 
         result = {x:y for x,y in result.items() if y != 0}
@@ -159,8 +159,10 @@ class Corpus():
         doc_ids = []
         # sort the results by the highest similarity 
         res = sorted(result, key=result.get, reverse=True)
+        print(res)
         # get the correct document ids of the resulting documents 
         doc_ids = [self.doc_ids[i] for i in res]
+        print(doc_ids)
         
         return doc_ids
 

@@ -1,3 +1,5 @@
+
+
 const resultsBox = document.getElementById("results-box");
 
 function add_html_results(results) {
@@ -172,23 +174,49 @@ function bookmark(article_id, user_id) {
   };
 }
 
-// function translate_text() {
-//   var textarea = document.getElementsByTagName('p');
-//   var selectedtext = '';
+function translate_text(selectedtext) {
+  console.log(selectedtext);
+  var key = "AIzaSyAXK6vafPc4m5M7hPmLz8yvY5q9b7hb0Is";
+  var url = "https://translation.googleapis.com/language/translate/v2?key=" + key;
+  
+  var body = {
+    "source": "fr",
+    "target": "en",
+    "q": selectedtext
+  }
 
-//   if (document.getSelection) {
-//     selectedtext = document.getSelection().toString();
-//     console.log(selectedtext);
-//     // post request to translation api 
-//     // render results 
-//   }
-//   else return;
+  fetch(url, {
+    method: "POST",
+    body: JSON.stringify(body),
+    cache: "no-cache",
+    headers: new Headers({
+      "content-type": "application/json"
+    })
+  })
+    .then((response) => {
+      // catch if back end process failed 
+      if (response.status !== 200) {
+        console.log(`Error. Status code: ${response.status}`);
+        return;
+      }
+      response.json().then(function (data) {
+        // alert user of response of request
+        console.log(data.data.translations[0].translatedText);
+        alert(`Translation: ${data.data.translations[0].translatedText}`);
+        return;
+      });
+    })
+    .catch((error) => {
+      // catch if request failed 
+      console.log("Fetch error: " + error);
+      return;
+    });
+  }
 
-// }
 
 function validate_db_query(body) {
   // if no filters and no query are selected alert user 
-  if (body["query"] == '' && body["level"] == ''  && body["author"] == '' && body["filter_type"] == ''){
+  if (body["query"] == '' && body["level"] == ''  && body["author"] == '' && (body["filter_type"] == ''| body["filter_type"] == 'relevance')){
     alert("Please fill in the search query and/or filters. ")
     return false;
   } else {
@@ -215,10 +243,24 @@ function set_num(){
 
 $(function () {
 
+    
   // setBackground();
   if (window.location.pathname == "/profile"){
     set_num();
   }
+
+  // console.log(window.location.pathname.split("/")[1]);
+  if (window.location.pathname.split("/")[1] == "view_article"){
+    console.log("view");
+
+    $("div").on("mouseup", () => {
+      var selectedtext = document.getSelection().toString();
+      if (selectedtext.length !== 0 || selectedtext.trim()) {
+        translate_text(selectedtext);
+      }
+    });
+  }
+
 
   $("[name='submit1']").on('click', () => {
     var type = "database";

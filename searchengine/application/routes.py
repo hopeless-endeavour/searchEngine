@@ -85,6 +85,75 @@ def update_tfidf():
     print("TF-IDF updated.")
     return C
 
+def start_crawl(domain, n):
+    res = []
+
+    if domain == "20min":
+        article_dict = TwentyMinSpider().run(n)
+    elif domain == "figaro":
+        article_dict = FigaroSpider().run(n)
+    elif domain == "franceinfo":
+        article_dict = FranceInfoSpider().run(n)
+        
+    # calc cefr
+    flag = False
+    for i in article_dict:
+        article = Article.query.filter_by(url=i).first()
+        if not article:
+            flag = True
+            add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
+                        author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i)
+        else:
+            print(f"{article} already in DB.")
+
+    article_objs = Article.query.filter(Article.url.in_(article_dict.keys())).all()
+
+    return article_objs, flag
+
+def apply_filters(req):
+    ordering = []
+    article_objs = Article.query
+    if req["query"]:
+        doc_ids = C.submit_query(req['query'])
+        query_filter = {}
+        for i in range(len(doc_ids)):
+            query_filter[doc_ids[i]] = i
+        
+        print(query_filter)
+    
+        article_objs = article_objs.order_by((case(query_filter, value=Article.id, else_=len(doc_ids)+1)))
+        print(article_objs.all())
+
+    if req['level']:
+        cefr_filter = case({req['level']: "0"}, value=Article.cefr, else_="1")
+        ordering.append(cefr_filter)
+
+    if req['author']:
+        author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
+        ordering.append(author_filter)  
+
+    if req["filter_type"]:
+        if req["filter_type"] == "newest":
+            date_filter = Article.published.desc()
+        elif req["filter_type"] == "oldest":
+            date_filter = Article.published.asc()
+        ordering.append(date_filter)
+    
+    
+    if ordering:
+        article_objs = article_objs.order_by(*ordering)
+
+    return article_objs.all()
+
+def update():
+    global C
+    print("update started...")
+    start = time.perf_counter()
+    C = update_tfidf()
+    update_data_file()
+    finish = time.perf_counter()
+    print(f"Successfully updated in {round(finish-start,2)} second(s)")   
+
 
 @app.before_first_request
 def before_first_request():
@@ -143,7 +212,10 @@ def register():
         user_obj = User.query.filter_by(username=username).first()
         if user_obj:
             flash("Username taken")
-            return redirect(url_for('register'))
+            # return redirect(url_for('register'))
+        elif len(password) < 8 or not any(i.isdigit() for i in password):
+            flash("Password must be at least 8 characters long and contain at least one number.")
+            # return redirect(url_for('register'))
         else:
             add_to_db(User, username=username, password=sha256_crypt.hash(password)) # hash user's password 
             
@@ -240,68 +312,7 @@ def upload():
             img = 'static/img/default.jpg'
 
         return make_response(jsonify(img), 200)
-
-
-def start_crawl(domain, n):
-    res = []
-
-    if domain == "20min":
-        article_dict = TwentyMinSpider().run(n)
-    elif domain == "figaro":
-        article_dict = FigaroSpider().run(n)
-    elif domain == "franceinfo":
-        article_dict = FranceInfoSpider().run(n)
-        
-    # calc cefr
-    flag = False
-    for i in article_dict:
-        article = Article.query.filter_by(url=i).first()
-        if not article:
-            flag = True
-            add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
-                        author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i)
-        else:
-            print(f"{article} already in DB.")
-
-    article_objs = Article.query.filter(Article.url.in_(article_dict.keys())).all()
-
-    return article_objs, flag
-
-def apply_filters(req):
-    ordering = []
-    if req['level']:
-        cefr_filter = case({req['level']: "0"}, value=Article.cefr, else_="1")
-        ordering.append(cefr_filter)
-
-    if req['author']:
-        author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
-        ordering.append(author_filter)  
-
-    if req["filter_type"]:
-        if req["filter_type"] == "newest":
-            date_filter = Article.published.desc()
-        elif req["filter_type"] == "oldest":
-            date_filter = Article.published.asc()
-        ordering.append(date_filter)
-    
-    article_objs = Article.query
-    if req["query"]:
-        doc_ids = C.submit_query(req['query'])
-        article_objs = article_objs.filter(Article.id.in_(doc_ids))
-    
-    if ordering:
-        article_objs = article_objs.order_by(*ordering)
-
-    return article_objs.all()
-
-def update():
-    global C
-    print("update started...")
-    start = time.perf_counter()
-    C = update_tfidf()
-    update_data_file()
-    finish = time.perf_counter()
-    print(f"Successfully updated in {round(finish-start,2)} second(s)")         
+      
 
 @app.route('/_background', methods=['post'])
 def background():
