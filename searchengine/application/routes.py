@@ -88,16 +88,18 @@ def update_tfidf():
 def start_crawl(domain, n):
     res = []
 
+    # create appropriate spider for chosen domain and run
     if domain == "20min":
         article_dict = TwentyMinSpider().run(n)
     elif domain == "figaro":
         article_dict = FigaroSpider().run(n)
     elif domain == "franceinfo":
         article_dict = FranceInfoSpider().run(n)
-        
-    # calc cefr
+
+    # flag var is to indicate whether any new articles, in which case the TF-IDF values would need updating 
     flag = False
     for i in article_dict:
+        # if article is not already in the DB add it
         article = Article.query.filter_by(url=i).first()
         if not article:
             flag = True
@@ -106,6 +108,7 @@ def start_crawl(domain, n):
         else:
             print(f"{article} already in DB.")
 
+    # filter to get all articles just scrapped 
     article_objs = Article.query.filter(Article.url.in_(article_dict.keys())).all()
 
     return article_objs, flag
@@ -113,26 +116,29 @@ def start_crawl(domain, n):
 def apply_filters(req):
     ordering = []
     article_objs = Article.query
+
     if req["query"]:
+        # submit the user query to the Corpus 
         doc_ids = C.submit_query(req['query'])
         query_filter = {}
         for i in range(len(doc_ids)):
             query_filter[doc_ids[i]] = i
-        
-        print(query_filter)
-    
+
+        # sort articles so that documents calculated to be similiar by the Corpus are first 
         article_objs = article_objs.order_by((case(query_filter, value=Article.id, else_=len(doc_ids)+1)))
-        print(article_objs.all())
 
     if req['level']:
+        # create case statement for the CEFR level 
         cefr_filter = case({req['level']: "0"}, value=Article.cefr, else_="1")
         ordering.append(cefr_filter)
 
     if req['author']:
+        # create case statement for the author filter 
         author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
         ordering.append(author_filter)  
 
     if req["filter_type"]:
+        # order articles appropriatly according to the date published filter 
         if req["filter_type"] == "newest":
             date_filter = Article.published.desc()
         elif req["filter_type"] == "oldest":
@@ -141,6 +147,7 @@ def apply_filters(req):
     
     
     if ordering:
+        # apply all case filters from above 
         article_objs = article_objs.order_by(*ordering)
 
     return article_objs.all()
@@ -212,10 +219,8 @@ def register():
         user_obj = User.query.filter_by(username=username).first()
         if user_obj:
             flash("Username taken")
-            # return redirect(url_for('register'))
         elif len(password) < 8 or not any(i.isdigit() for i in password):
             flash("Password must be at least 8 characters long and contain at least one number.")
-            # return redirect(url_for('register'))
         else:
             add_to_db(User, username=username, password=sha256_crypt.hash(password)) # hash user's password 
             
@@ -243,7 +248,7 @@ def login():
                 # add user to the session 
                 session['user_id'] = user_obj.id
                 print(session)
-                return redirect(url_for('profile'))
+                return redirect(url_for('bookmarks'))
             else:
                 flash("Password is incorrect")
         else:
@@ -252,8 +257,8 @@ def login():
     return render_template('login.html')
 
 
-@app.route('/profile', methods=['post', 'get'])
-def profile():
+@app.route('/bookmarks', methods=['post', 'get'])
+def bookmarks():
     
     # if there is user in the session find their bookmarks from the DB, otherwise redirect to login
     if session.get('user_id', None) :
@@ -261,7 +266,7 @@ def profile():
         print(session)
         user = User.query.filter_by(id=user_id).first()
         bookmarks = db.session.query(Article).join(UserArticle).join(User).filter(User.id == user_id).all()
-        return render_template('profile.html', user=user, bookmarks=bookmarks)
+        return render_template('bookmarks.html', user=user, bookmarks=bookmarks)
     else:
         flash("No username found in session")
         return redirect(url_for("login"))
@@ -272,6 +277,7 @@ def view_article(article_id):
     
     # get appropriate article from DB using article id passed into the route url
     article = Article.query.filter_by(id=article_id).first()
+    print(article.published)
     return render_template('view_article.html', article=article, article_id=int(article_id))
 
 
@@ -283,58 +289,34 @@ def logout():
     flash("Logged Out")
 
     return redirect(url_for('index'))
-
-
-@app.route('/_upload', methods=['POST', 'GET'])
-def upload():
-
-    # TODO: set max image upload size
-    if request.method == 'POST':
-        user_id = session['user_id']
-        print(user_id)
-        user = User.query.filter_by(id=user_id).first()
-        f = request.files['file']
-        print(f)
-        filename = f'{user_id}{os.path.splitext(f.filename)[1]}'
-        user.img = filename
-        print(user.img)
-        db.session.add(user)
-        db.session.commit()
-        f.save(f"/application/static/img/{filename}")
-        print(filename)
-
-        return redirect(url_for('profile'))
-
-    if request.method == 'GET':
-        if session.get('user_id'):
-            img = f"static/img/{User.query.filter_by(id=session['user_id']).first().img}"
-        else:
-            img = 'static/img/default.jpg'
-
-        return make_response(jsonify(img), 200)
       
 
 @app.route('/_background', methods=['post'])
 def background():
     
-
+    # recieve query 
     req = request.get_json()
     print(req)
     res = []
 
     if req["type"] == "current":
+        # if user selected to get current news start crawling news from specified domain
         article_objs, flag = start_crawl(req["domain"], int(req["n"]))
         if flag: 
+            # if there are new articles, then TF-IDF needs updating, start thread for update() 
             thread = AppContextThread(target=update).start()
         
     else:
+        # query the database option chosen, so apply filters 
         article_objs = apply_filters(req)
-        
+
+    # return only the specified number of articles 
     for i in article_objs[:int(req['n'])]:
         doc = i.as_dict()
-        doc['text'] = doc['text'][:197]
+        doc['text'] = doc['text'][:197] # only take first few characters as a summary 
         res.append(doc)
 
+    #return response to js front end 
     return make_response(jsonify(res, 200))
 
 

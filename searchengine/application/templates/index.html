@@ -9,11 +9,11 @@
     <h2>French News Search Engine</h2>
     <div class="flex-box">
       <div class='filters card '>
-        <h5>Filters:</h5>
+        <h5>Search by...</h5>
         <div class="form-group">
-          <p>Number of articles: {{ n_articles}}</p>
+          <p>(Total number of articles: {{ n_articles}})</p>
           <select class="form-control custom-select" id="n-select">
-            <option value="5" selected> Number of returns</option>
+            <option value="5" selected>Number of results:</option>
             {% for i in range(1, 11) %}
             <option value="{{i}}">{{i}} </option>
             {% endfor %}
@@ -22,7 +22,7 @@
         <div class="form-group">
           <!-- filter choices  -->
           <select class="form-control custom-select" id="filter-type">
-            <option value="" disabled hidden selected>Filter by:</option>
+            <option value="" disabled hidden selected>Date:</option>
             <option value="relevance">Relevance</option>
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
@@ -31,7 +31,7 @@
         <div class="form-group">
           <!-- cefr filter  -->
           <select class="form-control custom-select" id="level">
-            <option value="" selected>Select level:</option>
+            <option value="" selected>CEFR level:</option>
             {% for key,value in n_cefrs.items() %}
             {% if value == 0 %}
             <option value="{{key}}" disabled>{{key}} ({{value}})</option>
@@ -44,7 +44,7 @@
         <div class="form-group">
           <!-- author filter -->
           <select class="form-control custom-select" id="author">
-            <option value="" selected>Published by:</option>
+            <option value="" selected>Publisher:</option>
             {% for i in authors %}
             <option value="{{ i }}">{{ i }}</option>
             {% endfor %}
@@ -54,7 +54,7 @@
       <div class="flex-box2">
         <div class="query-form">
           <div class="form-group">
-            <input type="text" id="query" class="form-control query" placeholder="Search...">
+            <input type="text" id="query" class="form-control query" placeholder="Search the database...">
           </div>
           <div>
             <button name="submit1" class="btn btn-outline-light search-btn" type="submit"><i
@@ -67,7 +67,7 @@
           <!-- select current news option -->
           <div class="form-group site-select">
             <select class="form-control custom-select" id="domain">
-              <option value="" selected>Get current news from...</option>
+              <option value="" selected disabled hidden>Latest news from...</option>
               <option value="20min">20minutes.fr</option>
               <option value="figaro">lefigaro.fr</option>
               <option value="franceinfo">francetvinfo.fr</option>

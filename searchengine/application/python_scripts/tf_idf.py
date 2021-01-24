@@ -17,21 +17,21 @@ class Corpus():
 
     def __init__(self):
 
-        self.documents = []
+        self._documents = []
         self.doc_ids = []
         self.num_docs = 0
         self.vocab = []
         self.len_vocab = 0
-        self.tf_matrix = []
-        self.df_vec = []
-        self.idf_vec = []
+        self._tf_matrix = []
+        self._df_vec = []
+        self._idf_vec = []
         self.tf_idf = []
 
     def add_document(self, id, title, text, flag):
-        """ Creates and adds document objects into the documents list """
+        """ Creates and adds document objects into the _documents list """
 
         new_doc = Document(id, title, text)
-        self.documents.append(new_doc)
+        self._documents.append(new_doc)
         self.doc_ids.append(id)
         self.num_docs += 1
         if flag:
@@ -41,7 +41,7 @@ class Corpus():
     def _update_vocab(self, doc_id):
         """ Adds any new words from the given document to the corpus vocab list """
 
-        for i in self.documents:
+        for i in self._documents:
             if i.id == doc_id:
                 for j in i.tokens:
                     if j not in self.vocab:
@@ -68,31 +68,31 @@ class Corpus():
         """ Calculates idf vector for every word in the corpus vocab """
 
         # first calculate df
-        self.df_vec = [0] * self.len_vocab
+        self._df_vec = [0] * self.len_vocab
         for i, token in enumerate(self.vocab):
-            for doc in self.documents:
+            for doc in self._documents:
                 if token in doc.tokens:
-                    self.df_vec[i] += 1
+                    self._df_vec[i] += 1
 
         # then calculate idf 
-        self.idf_vec = [0] * self.len_vocab
-        for i, df in enumerate(self.df_vec):
-            self.idf_vec[i] = math.log(self.num_docs / (df))
+        self._idf_vec = [0] * self.len_vocab
+        for i, df in enumerate(self._df_vec):
+            self._idf_vec[i] = math.log(self.num_docs / (df))
         
         return 
 
     def calc_tfidf(self):
         """ Calculates the tf-idf matrix for the whole corpus """
 
-        for i in self.documents:
-            self.tf_matrix.append(self._calc_tf(i))
+        for i in self._documents:
+            self._tf_matrix.append(self._calc_tf(i))
 
         self._calc_idf()
 
-        for arr in self.tf_matrix:
+        for arr in self._tf_matrix:
             tfidf = []
             for i, tf in enumerate(arr):
-                tfidf_value = tf * self.idf_vec[i]
+                tfidf_value = tf * self._idf_vec[i]
                 tfidf.append(tfidf_value)
             self.tf_idf.append(tfidf)
 
@@ -108,7 +108,7 @@ class Corpus():
             df = 0
             try:
                 index = self.vocab.index(token)
-                df = self.df_vec[index]
+                df = self._df_vec[index]
             except:
                 pass
 
@@ -143,7 +143,7 @@ class Corpus():
         return comparison_vec
 
     def submit_query(self, query):
-        """ Takes a query and calls all the appropriate methods to find the most similar documents in the corpus """
+        """ Takes a query and calls all the appropriate methods to find the most similar _documents in the corpus """
 
         query = Query(query)
         q_tfidf = self._calc_query_tfidf(query)
@@ -160,7 +160,7 @@ class Corpus():
         # sort the results by the highest similarity 
         res = sorted(result, key=result.get, reverse=True)
         print(res)
-        # get the correct document ids of the resulting documents 
+        # get the correct document ids of the resulting _documents 
         doc_ids = [self.doc_ids[i] for i in res]
         print(doc_ids)
         
@@ -240,6 +240,6 @@ class Query(Document):
 # c = Corpus()
 # c.add_document(1, 'situation de la gouvernement', text, True)
 # c.add_document(2, 'situation des musulmans', text2, True)
-# c.add_document(3, 'Donald Trump', text3, True)
+# # c.add_document(3, 'Donald Trump', text3, True)
 # c.calc_tfidf()
 # res = c.submit_query("macron")

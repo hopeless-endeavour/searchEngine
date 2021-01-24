@@ -70,7 +70,6 @@ function create_body(type){
 }
 
 function post_query(body) {
-
   // send post request to back end 
   fetch(`${window.origin}/_background`, {
     method: "POST",
@@ -105,15 +104,6 @@ function post_query(body) {
     });
 }
 
-function setBackground() {
-  fetch(`${window.origin}/_upload`)
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      document.body.style.backgroundImage = `url(${data})`;
-    })
-}
-
 function post_id(article_id, user_id, type) {
 
   // create body of request 
@@ -141,7 +131,7 @@ function post_id(article_id, user_id, type) {
       }
       response.json().then(function (data) {
         // alert user of response of request
-        // alert(data["message"])
+        alert(data["message"])
         console.log(data);
       });
     })
@@ -165,7 +155,7 @@ function bookmark(article_id, user_id) {
     // icon is black, so post an "unbookmark" type request
     post_id(article_id, user_id, "unbookmark");
     // change icon to white
-    if (window.location.pathname == "/profile"){
+    if (window.location.pathname == "/bookmarks"){
       el.closest(".card").remove();
       set_num();
     }
@@ -184,7 +174,7 @@ function translate_text(selectedtext) {
     "target": "en",
     "q": selectedtext
   }
-
+  // send post request to google api 
   fetch(url, {
     method: "POST",
     body: JSON.stringify(body),
@@ -200,8 +190,8 @@ function translate_text(selectedtext) {
         return;
       }
       response.json().then(function (data) {
-        // alert user of response of request
         console.log(data.data.translations[0].translatedText);
+        // alert user of the recieved transaltion 
         alert(`Translation: ${data.data.translations[0].translatedText}`);
         return;
       });
@@ -237,25 +227,24 @@ function validate_current_query(body) {
 }
 
 function set_num(){
+  // function to dynamically update the text saying how many articles a user has bookmarked
    var num = document.getElementsByClassName("card").length - 1;
    document.getElementById("num").innerHTML = `You have ${num} bookmarked pages`;
 }
 
 $(function () {
 
-    
-  // setBackground();
-  if (window.location.pathname == "/profile"){
+  if (window.location.pathname == "/bookmarks"){
     set_num();
   }
 
-  // console.log(window.location.pathname.split("/")[1]);
   if (window.location.pathname.split("/")[1] == "view_article"){
     console.log("view");
 
     $("div").on("mouseup", () => {
+      // get text selected by user and pass into translate functions 
       var selectedtext = document.getSelection().toString();
-      if (selectedtext.length !== 0 || selectedtext.trim()) {
+      if (selectedtext.length !== 0 || selectedtext.trim()) {  // ensure selected text isnt empty
         translate_text(selectedtext);
       }
     });
