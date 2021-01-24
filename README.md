@@ -16,3 +16,13 @@ $ venv\Scripts\activate.bat
 (venv) $ flask run
 
 ```
+
+Set up for apple machines
+
+```
+$ source venv/bin/activate
+(venv) $ export FLASK_APP=run.py
+(venv) $ cd searchengine
+(venv) $ flask run
+
+```
