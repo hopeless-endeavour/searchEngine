@@ -6,6 +6,8 @@ import json
 from collections import Counter
 
 from  nltk.stem.snowball import FrenchStemmer
+from textstat.textstat import textstatistics
+import pyphen
 
 text = "Le gouvernement va pouvoir continuer de mettre en place des restrictions pour faire face à la deuxième vague de coronavirus. Dans une ambiance souvent tendue, l’Assemblée nationale a voté samedi la prorogation de l’état d’urgence sanitaire jusqu’au 16 février. Le projet de loi, voté par 71 voix contre 35 en première lecture, est attendu au Sénat mercredi et devrait être adopté définitivement début novembre."
 
@@ -174,12 +176,13 @@ class Document():
         self.id = id
         self.title = title
         if self.title:
-            self.processed_title = self._preprocess(title)
+            self.processed_title = self._preprocess(title, True)
 
         self.raw_text = raw_text
-        self.clean_text = self._preprocess(raw_text)
+        self.clean_text = self._preprocess(raw_text, True)
         self.tokens = self._get_tokens()
         self.num_tokens = len(self.tokens)
+        # self.cefr = self._cefr_score()
 
     def _remove_stopwords(self, text):
         """ Removes stopwords from given text. """
@@ -194,10 +197,10 @@ class Document():
 
         return new_text
 
-    def _preprocess(self, raw_text):
+    def _preprocess(self, raw_text, flag):
         """ Parses given raw text. Returns a list of words. """
 
-        stemmer = FrenchStemmer()
+        self.stemmer = FrenchStemmer()
 
         punctuation = "!\"#$%&()*+…-.,/:;<=>?@[\\]^_«»{|}~\n“”€—–"
         clean_text = raw_text.lower()
@@ -208,9 +211,13 @@ class Document():
         clean_text = re.sub("'", ' ', clean_text)
         clean_text = re.sub('\n', '', clean_text)
         clean_text = clean_text.split()
-        clean_text = [stemmer.stem(i) for i in clean_text]
+        clean_text = [self.stemmer.stem(i) for i in clean_text]
 
-        return self._remove_stopwords(clean_text)
+        if flag:
+            return self._remove_stopwords(clean_text)
+
+        else:
+            return clean_text
 
     def _get_tokens(self):
         """ Gets all the individual words/tokens from the objects title and text. Returns list of tokens.  """
@@ -225,6 +232,55 @@ class Document():
                 tokens.append(i)
         
         return tokens
+    
+    # def _num_sentences(self):
+    #     return len(re.findall("\w+[^.!?]*[.!?]", self.raw_text))
+    
+    # def _num_syllables(self):
+    #     syl = pyphen.Pyphen(lang="fr")
+    #     return len(syl.inserted(self.raw_text).split("-"))
+    #     # text_stat = textstatistics()
+    #     # text_stat.set_lang("fr")
+    #     # return text_stat.syllable_count(self.raw_text)
+
+    # def _avg_sent_len(self):
+    #     print(f"num words: {len(self.raw_text.split())}")
+    #     print(f"Num sents: {self._num_sentences()}")
+    #     try:
+    #         return len(self.raw_text.split()) / self._num_sentences()
+    #     except Exception as e:
+    #         print(f"Division error at doc {self.id}")
+    #         return 0.0
+
+    # def _avg_word_len(self):
+    #     print(f"sylls: {self._num_syllables()}")
+    #     try:
+    #         return self._num_syllables() / len(self.raw_text.split())
+    #     except Exception as e:
+    #         print(f"Division error at doc {self.id}")
+    #         return 0.0
+
+
+    # def _flesch_score(self):
+    #     return 207 - (1.015 * self._avg_sent_len()) - (73.6 * self._avg_word_len())
+
+    # def _cefr_score(self):
+    #     flesch = self._flesch_score()
+    #     cefr = "unknown"
+    #     if flesch >= 90:
+    #         cefr = "A1"
+    #     elif flesch >= 80:
+    #         cefr = "A2"
+    #     elif flesch >= 70:
+    #         cefr = "B1"
+    #     elif flesch >= 60:
+    #         cefr = "B2"
+    #     elif flesch >= 50:
+    #         cefr = "C1"
+    #     elif flesch >= 0:
+    #         cefr = "C2"   
+        
+    #     return cefr
 
 
 class Query(Document):
@@ -240,6 +296,10 @@ class Query(Document):
 # c = Corpus()
 # c.add_document(1, 'situation de la gouvernement', text, True)
 # c.add_document(2, 'situation des musulmans', text2, True)
-# # c.add_document(3, 'Donald Trump', text3, True)
-# c.calc_tfidf()
-# res = c.submit_query("macron")
+# c.add_document(3, 'Donald Trump', text3, True)
+# # c.calc_tfidf()
+# # res = c.submit_query("macron")
+# c._documents[0]._cefr_score()
+# c._documents[1]._cefr_score()
+# c._documents[2]._cefr_score()
+

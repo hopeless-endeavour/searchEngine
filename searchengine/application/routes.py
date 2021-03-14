@@ -15,8 +15,10 @@ from passlib.hash import sha256_crypt
 from .models import db, Article, User, UserArticle
 from application.python_scripts.tf_idf import Corpus, Query
 from application.python_scripts.spider import TwentyMinSpider, FigaroSpider, FranceInfoSpider
+from application.python_scripts.cefr_calculator import CefrCalculator
 
 C = Corpus()
+cefr_calc = CefrCalculator()
 
 def read_data(path):
     """ Reads the json data from the dataset in the given directory. Returns 2D array of data """
@@ -37,7 +39,7 @@ def read_data(path):
             json_obj = json.loads(full_data)
 
             # only append to data array if there is content in the "text" field and the article isn't from anibis ( an irrelevant website )
-            if ("anibis.ch" not in json_obj['url']) and (json_obj["text"] != ''): # or (check_url(json_obj['url']))
+            if ("anibis.ch" not in json_obj['url']) and ("yahoo" not in json_obj['url']) and ("dealabs" not in json_obj['url']) and (json_obj["text"] != ''): # or (check_url(json_obj['url']))
                 data.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(
                     json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
 
@@ -50,7 +52,9 @@ def upload_dataset_toDB(path):
 
     corpus = read_data(path)
     for i in range(len(corpus)):
-        add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4])
+        cefr = cefr_calc.cefr_score(corpus[i][1])
+        print(cefr)
+        add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4], cefr=cefr)
 
     print('Uploaded dataset to DB.')
 
@@ -103,8 +107,10 @@ def start_crawl(domain, n):
         article = Article.query.filter_by(url=i).first()
         if not article:
             flag = True
+            cefr = cefr_calc.cefr_score(article_dict[i]["content"])
+            print(cefr)
             add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
-                        author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i)
+                        author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i, cefr=cefr)
         else:
             print(f"{article} already in DB.")
 

@@ -22,12 +22,12 @@ function add_html_results(results) {
 
     return `
     <div class="card">
-      <div class="card-header">
-         CEFR: ${result.cefr}
-       </div>
       <div class="card-body">
         <div class="card-title d-flex flex-row">
-        <a href="${window.origin}/view_article/${result.id}"><h5>${result.title}</h5></a>
+        <a href="${window.origin}/view_article/${result.id}">
+        <h5>${result.title}</h5>
+        </a>
+        <div class="card-cefr ml-auto p-2">${result.cefr}</div>
         ${button}
         </div>
         <a href="${result.url}" class="card-link card-subtitle text-muted">${result.url}</a>
