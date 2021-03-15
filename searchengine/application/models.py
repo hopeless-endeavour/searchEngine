@@ -16,6 +16,7 @@ class Article(db.Model):
     title = db.Column(db.String, nullable=False)
     text = db.Column(db.String, nullable=False)
     author = db.Column(db.String, nullable=False)
+    domain = db.Column(db.String, nullable=False)
     published = db.Column(db.DateTime)
     url = db.Column(db.String, unique=True, nullable=False)
     cefr = db.Column(db.String, default="Unknown")

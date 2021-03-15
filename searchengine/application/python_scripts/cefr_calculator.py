@@ -100,7 +100,7 @@ A l’époque, il n’y avait pas la possibilité pour les femmes d’être arbi
 
 # t = textstatistics()
 # t.set_lang("fr")
-c = CefrCalculator()
+# c = CefrCalculator()
 # c1, f1 = c.cefr_score(text)
 # c2, f2 = c.cefr_score(text2)
 # c3, f3 = c.cefr_score(text3)
@@ -130,5 +130,5 @@ c = CefrCalculator()
 # with open("application/python_scripts/vocab_list.txt", "r", encoding="utf-8") as f:
 #     words = f.readlines()
 
-words = open("application/python_scripts/vocab_list.txt", "r", encoding="utf-8").readlines()
-words = [i.split(":")[0].strip() for i in words]
+# words = open("application/python_scripts/vocab_list.txt", "r", encoding="utf-8").readlines()
+# words = [i.split(":")[0].strip() for i in words]

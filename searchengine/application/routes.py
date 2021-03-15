@@ -39,10 +39,10 @@ def read_data(path):
             json_obj = json.loads(full_data)
 
             # only append to data array if there is content in the "text" field and the article isn't from anibis ( an irrelevant website )
-            if ("anibis.ch" not in json_obj['url']) and ("yahoo" not in json_obj['url']) and ("dealabs" not in json_obj['url']) and (json_obj["text"] != ''): # or (check_url(json_obj['url']))
+            if ("anibis.ch" not in json_obj['url']) and ("yahoo" not in json_obj['url']) and ("dealabs" not in json_obj['url']) and (len(json_obj["text"]) > 500): # or (check_url(json_obj['url']))
                 data.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(
-                    json_obj['published'][:10], "%Y-%m-%d"), json_obj['url']])
-
+                    json_obj['published'][:10], "%Y-%m-%d"), json_obj['url'], json_obj["thread"]["site"]])
+                
 
     return data
 
@@ -53,8 +53,8 @@ def upload_dataset_toDB(path):
     corpus = read_data(path)
     for i in range(len(corpus)):
         cefr = cefr_calc.cefr_score(corpus[i][1])
-        print(cefr)
-        add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4], cefr=cefr)
+        # print(cefr)
+        add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4], domain=corpus[i][5], cefr=cefr)
 
     print('Uploaded dataset to DB.')
 
@@ -108,7 +108,7 @@ def start_crawl(domain, n):
         if not article:
             flag = True
             cefr = cefr_calc.cefr_score(article_dict[i]["content"])
-            print(cefr)
+            # print(cefr)
             add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
                         author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i, cefr=cefr)
         else:
@@ -140,7 +140,7 @@ def apply_filters(req):
 
     if req['author']:
         # create case statement for the author filter 
-        author_filter = case({req['author']: "0"}, value=Article.author, else_="1")
+        author_filter = case({req['author']: "0"}, value=Article.domain, else_="1")
         ordering.append(author_filter)  
 
     if req["filter_type"]:
@@ -200,6 +200,8 @@ def index():
     authors = [i[0] for i in db.session.query(Article.author).order_by(Article.author).distinct().all()] 
     # gets number of articles in the db
     n_articles = Article.query.count() 
+    # get domains 
+    domains = [i[0] for i in db.session.query(Article.domain).order_by(Article.domain).distinct().all()] 
     # get how many articles have each level of cefr
     cefrs = db.session.query(func.count(Article.id), Article.cefr).group_by(Article.cefr).all()
     for count, cefr in cefrs: 
@@ -207,7 +209,7 @@ def index():
             n_cefrs[cefr] = count 
     
 
-    return render_template('index.html', n_articles=n_articles, n_cefrs=n_cefrs, authors=authors)
+    return render_template('index.html', n_articles=n_articles, n_cefrs=n_cefrs, authors=authors, domains=domains)
 
 
 @app.route('/register', methods=['post', 'get'])
