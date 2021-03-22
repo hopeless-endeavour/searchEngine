@@ -8,7 +8,7 @@ Search Engine for French articles/websites/blogs etc.
 Set up for windows machines
 
 ```
-$ venv\Scripts\activate.bat
+$ pip install -r requirements.txt
 (venv) $ set FLASK_APP=run.py
 (venv) $ cd searchengine
 (venv) $ flask run
@@ -18,7 +18,7 @@ $ venv\Scripts\activate.bat
 Set up for apple machines
 
 ```
-$ source venv/bin/activate
+$ pip install -r requirements.txt
 (venv) $ export FLASK_APP=run.py
 (venv) $ cd searchengine
 (venv) $ flask run
