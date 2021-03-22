@@ -33,3 +33,4 @@ class UserArticle(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
     article_id = db.Column(db.Integer(), db.ForeignKey("articles.id"))
     db.PrimaryKeyConstraint(user_id, article_id, name='comp_key') # composite primary key 
+

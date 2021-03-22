@@ -23,7 +23,7 @@
           <!-- filter choices  -->
           <select class="form-control custom-select" id="filter-type">
             <option value="" disabled hidden selected>Date:</option>
-            <option value="relevance">Relevance</option>
+            <option value="">Relevance</option>
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
           </select>
@@ -42,7 +42,7 @@
           </select>
         </div>
         <div class="form-group">
-          <!-- author filter -->
+          <!-- domain filter -->
           <select class="form-control custom-select" id="author">
             <option value="" selected>Publisher:</option>
             {% for i in domains %}
@@ -68,9 +68,9 @@
           <div class="form-group site-select">
             <select class="form-control custom-select" id="domain">
               <option value="" selected disabled hidden>Latest news from...</option>
-              <option value="20min">20minutes.fr</option>
-              <option value="figaro">lefigaro.fr</option>
-              <option value="franceinfo">francetvinfo.fr</option>
+              <option value="20minutes.fr">20minutes.fr</option>
+              <option value="lefigaro.fr">lefigaro.fr</option>
+              <option value="franceinfo.fr">francetvinfo.fr</option>
             </select>
           </div>
           <div>
@@ -89,3 +89,4 @@
 </div>
 
 {% endblock %}
+

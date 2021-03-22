@@ -8,7 +8,6 @@ from contextlib import closing
 from bs4 import BeautifulSoup as bs
 
 
-
 class Spider:
 
     def __init__(self, seed):
@@ -67,7 +66,7 @@ class Spider:
         for i in urls:
             links.append(self._check_url(i.get("href")))
 
-        return {"title": "title", "content": text, "links": links}
+        return {"title": title, "content": text, "links": links}
     
     def _get_initial_links(self):
         """ Gets initial links on seed domain, returns as initial queue. """

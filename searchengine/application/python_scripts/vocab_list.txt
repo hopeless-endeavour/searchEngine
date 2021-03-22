@@ -121,6 +121,7 @@ brillant : brilliant
 brûler : to burn
 brun : brown
 c'est-à-dire : that is to say
+c'est : this is 
 ça : that
 cacher : to hide
 calculer : to calculate
@@ -131,7 +132,7 @@ car : as, because
 carré : square (adj.)
 carrément : completely, blatanly (impossible, stupid)
 casser : to break
-causer : to cause, bring about
+causer : to cause, bring about 
 ce : this (masc.)
 ceci : this
 cela : that, it (formal)
@@ -509,7 +510,7 @@ jurer : to swear, vow
 jusque : up till
 juste : correctly, accurately
 justement : just (precisely)
-l' : the (before nouns beginning with a vowel)
+l': the (before nouns beginning with a vowel)
 l'accent : stress, accent
 l'accessoire : accessory
 l'accident : accident
@@ -1819,6 +1820,7 @@ rouge : red
 rouler : to roll
 rouspéter : to protest (informal)
 russe : Russian
+s' : reflexsive 
 s'approcher : to come near, approach
 s'asseoir : to sit down
 s'endormir : to fall asleep, go to sleep
@@ -1837,16 +1839,16 @@ savoir : to know
 scientifique : scientific
 scolaire : school (book, year), academic,
 se : himself, herself
-se baigner : to bathe, have a bath, go bathing
-se contenter : to be satisfied
-se débarrasser : to get rid
-se débrouiller : to manage, cope
-se marier : to get married
-se moquer : to make fun, poke fun (de - at)
-se rapprocher : to get nearer, come closer, approach
-se reposer : to rest, have a rest
-se souvenir : to remember
-se taire : to be quiet, be silent
+baigner : to bathe, have a bath, go bathing
+contenter : to be satisfied
+débarrasser : to get rid
+débrouiller : to manage, cope
+marier : to get married
+moquer : to make fun, poke fun (de - at)
+rapprocher : to get nearer, come closer, approach
+reposer : to rest, have a rest
+souvenir : to remember
+taire : to be quiet, be silent
 sec : dry
 sécher : to dry
 second : second (after first)
@@ -1998,3 +2000,9 @@ voyager : to travel
 vrai : true, real
 vraiment : really
 y : there
+n' : n
+t' : t
+j' : je 
+d' : de 
+m' : me 
+c' : ce

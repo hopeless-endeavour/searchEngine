@@ -1,5 +1,3 @@
-
-
 const resultsBox = document.getElementById("results-box");
 
 function add_html_results(results) {
@@ -22,12 +20,14 @@ function add_html_results(results) {
 
     return `
     <div class="card">
+      <div class="card-header">
+          CEFR: ${result.cefr}
+      </div>
       <div class="card-body">
         <div class="card-title d-flex flex-row">
         <a href="${window.origin}/view_article/${result.id}">
         <h5>${result.title}</h5>
         </a>
-        <div class="card-cefr ml-auto p-2">${result.cefr}</div>
         ${button}
         </div>
         <a href="${result.url}" class="card-link card-subtitle text-muted">${result.url}</a>
@@ -244,7 +244,7 @@ $(function () {
     $("div").on("mouseup", () => {
       // get text selected by user and pass into translate functions 
       var selectedtext = document.getSelection().toString();
-      if (selectedtext.length !== 0 || selectedtext.trim()) {  // ensure selected text isnt empty
+      if (selectedtext.length != 0 && selectedtext.trim()) {  // ensure selected text isnt empty
         translate_text(selectedtext);
       }
     });
@@ -271,3 +271,4 @@ $(function () {
     return false;
   });
 });
+

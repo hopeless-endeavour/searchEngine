@@ -6,14 +6,6 @@ import json
 from collections import Counter
 
 from  nltk.stem.snowball import FrenchStemmer
-from textstat.textstat import textstatistics
-import pyphen
-
-text = "Le gouvernement va pouvoir continuer de mettre en place des restrictions pour faire face à la deuxième vague de coronavirus. Dans une ambiance souvent tendue, l’Assemblée nationale a voté samedi la prorogation de l’état d’urgence sanitaire jusqu’au 16 février. Le projet de loi, voté par 71 voix contre 35 en première lecture, est attendu au Sénat mercredi et devrait être adopté définitivement début novembre."
-
-text2 = "Les appels au boycott de produits français se sont multipliés samedi dans plusieurs pays du Moyen-Orient. L’Organisation de coopération islamique, qui réunit les pays musulmans, a déploré « les propos de certains responsable français susceptibles de nuire aux relations franco-musulmanes ». L’émoi a été suscité par les propos du président Emmanuel Macron, qui a promis de ne pas « renoncer aux caricatures » de Mahomet, interdites dans la religion musulmane. vague"
-
-text3 = "Cette année, Joe Biden a renvoyé Donald Trump dans son golf privé en prenant bientôt sa place à la Maison Blanche. L’Argentine est proche de légaliser l’avortement et Adèle Haenel s’est levée contre les violences faites aux femmes. Pour la première fois dans l’Union européenne, les énergies renouvelables ont produit plus d’électricité que les combustibles fossiles lors du premier semestre 2020. Tom Moor, un ancien capitaine de l'armée britannique centenaire a collecté près de 40 millions de livres pour le système hospitalier du Royaume-Uni, en marchant avec son déambulateur !"
 
 class Corpus():
 
@@ -155,8 +147,6 @@ class Corpus():
         # if any results are 0, remove them 
         result = {x:y for x,y in result.items() if y != 0}
 
-        # TODO: even when both texts contain the word, both come up with 0, work out way to see if there are no matches
-        # TODO: dataset scrapes whole page, so results come up if theres a refereenced article to another page with a teaser
         
         doc_ids = []
         # sort the results by the highest similarity 
@@ -205,13 +195,12 @@ class Document():
         punctuation = "!\"#$%&()*+…-.,/:;<=>?@[\\]^_«»{|}~\n“”€—–"
         clean_text = raw_text.lower()
         clean_text = re.sub('[%s]' % re.escape(
-            punctuation), '', clean_text)
-        clean_text = re.sub('\w*\d\w*', '', clean_text)
-        # replaces ' with space
-        clean_text = re.sub("'", ' ', clean_text)
-        clean_text = re.sub('\n', '', clean_text)
-        clean_text = clean_text.split()
-        clean_text = [self.stemmer.stem(i) for i in clean_text]
+            punctuation), '', clean_text) # removes punctuation 
+        clean_text = re.sub('\w*\d\w*', '', clean_text) # removes digits 
+        clean_text = re.sub("'", ' ', clean_text) # replaces ' with space
+        clean_text = re.sub('\n', '', clean_text) # removes carrage returns 
+        clean_text = clean_text.split() # splits into an array of words 
+        clean_text = [self.stemmer.stem(i) for i in clean_text]  # stems each word in array 
 
         if flag:
             return self._remove_stopwords(clean_text)
@@ -232,55 +221,6 @@ class Document():
                 tokens.append(i)
         
         return tokens
-    
-    # def _num_sentences(self):
-    #     return len(re.findall("\w+[^.!?]*[.!?]", self.raw_text))
-    
-    # def _num_syllables(self):
-    #     syl = pyphen.Pyphen(lang="fr")
-    #     return len(syl.inserted(self.raw_text).split("-"))
-    #     # text_stat = textstatistics()
-    #     # text_stat.set_lang("fr")
-    #     # return text_stat.syllable_count(self.raw_text)
-
-    # def _avg_sent_len(self):
-    #     print(f"num words: {len(self.raw_text.split())}")
-    #     print(f"Num sents: {self._num_sentences()}")
-    #     try:
-    #         return len(self.raw_text.split()) / self._num_sentences()
-    #     except Exception as e:
-    #         print(f"Division error at doc {self.id}")
-    #         return 0.0
-
-    # def _avg_word_len(self):
-    #     print(f"sylls: {self._num_syllables()}")
-    #     try:
-    #         return self._num_syllables() / len(self.raw_text.split())
-    #     except Exception as e:
-    #         print(f"Division error at doc {self.id}")
-    #         return 0.0
-
-
-    # def _flesch_score(self):
-    #     return 207 - (1.015 * self._avg_sent_len()) - (73.6 * self._avg_word_len())
-
-    # def _cefr_score(self):
-    #     flesch = self._flesch_score()
-    #     cefr = "unknown"
-    #     if flesch >= 90:
-    #         cefr = "A1"
-    #     elif flesch >= 80:
-    #         cefr = "A2"
-    #     elif flesch >= 70:
-    #         cefr = "B1"
-    #     elif flesch >= 60:
-    #         cefr = "B2"
-    #     elif flesch >= 50:
-    #         cefr = "C1"
-    #     elif flesch >= 0:
-    #         cefr = "C2"   
-        
-    #     return cefr
 
 
 class Query(Document):
@@ -291,15 +231,3 @@ class Query(Document):
 
     def spell_check(self):
         pass
-
-
-# c = Corpus()
-# c.add_document(1, 'situation de la gouvernement', text, True)
-# c.add_document(2, 'situation des musulmans', text2, True)
-# c.add_document(3, 'Donald Trump', text3, True)
-# # c.calc_tfidf()
-# # res = c.submit_query("macron")
-# c._documents[0]._cefr_score()
-# c._documents[1]._cefr_score()
-# c._documents[2]._cefr_score()
-

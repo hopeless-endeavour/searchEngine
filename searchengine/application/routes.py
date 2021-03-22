@@ -39,7 +39,7 @@ def read_data(path):
             json_obj = json.loads(full_data)
 
             # only append to data array if there is content in the "text" field and the article isn't from anibis ( an irrelevant website )
-            if ("anibis.ch" not in json_obj['url']) and ("yahoo" not in json_obj['url']) and ("dealabs" not in json_obj['url']) and (len(json_obj["text"]) > 500): # or (check_url(json_obj['url']))
+            if ("anibis.ch" not in json_obj['url']) and ("yahoo" not in json_obj['url']) and ("dealabs" not in json_obj['url']) and (len(json_obj["text"]) > 600): # or (check_url(json_obj['url']))
                 data.append([json_obj['title'], json_obj['text'], json_obj['author'], datetime.datetime.strptime(
                     json_obj['published'][:10], "%Y-%m-%d"), json_obj['url'], json_obj["thread"]["site"]])
                 
@@ -52,7 +52,7 @@ def upload_dataset_toDB(path):
 
     corpus = read_data(path)
     for i in range(len(corpus)):
-        cefr = cefr_calc.cefr_score(corpus[i][1])
+        cefr = cefr_calc.cefr_score(corpus[i][1][:600])
         # print(cefr)
         add_to_db(Article, title=corpus[i][0], text=corpus[i][1], author=corpus[i][2], published=corpus[i][3], url=corpus[i][4], domain=corpus[i][5], cefr=cefr)
 
@@ -89,15 +89,50 @@ def update_tfidf():
     print("TF-IDF updated.")
     return C
 
+
+def update():
+    global C
+    print("update started...")
+    start = time.perf_counter()
+    C = update_tfidf()
+    update_data_file()
+    finish = time.perf_counter()
+    print(f"Successfully updated in {round(finish-start,2)} second(s)")   
+
+
+@app.before_first_request
+def before_first_request():
+
+    if not db.session.query(Article).first():
+        print('Empty DB.')
+        upload_dataset_toDB("application/data")
+        
+    # attempts to open data_file.pkl that contains Corpus data
+    try:
+        with open('data_file.pkl', 'rb') as f:
+            data = pickle.load(f)
+            C.num_docs = data["num_docs"]
+            C.doc_ids = data["doc_ids"]
+            C.vocab = data["vocab"]
+            C.len_vocab = data["len_vocab"]
+            C.tf_idf = data["tf_idf"]
+
+    # if file doesn't exist, upload the dataset to the database, calc tf_idf and update data file
+    except FileNotFoundError:
+        print("File not found.")
+        update_tfidf()
+        update_data_file()
+        
+
 def start_crawl(domain, n):
     res = []
 
     # create appropriate spider for chosen domain and run
-    if domain == "20min":
+    if domain == "20minutes.fr":
         article_dict = TwentyMinSpider().run(n)
-    elif domain == "figaro":
+    elif domain == "lefigaro.fr":
         article_dict = FigaroSpider().run(n)
-    elif domain == "franceinfo":
+    elif domain == "franceinfo.fr":
         article_dict = FranceInfoSpider().run(n)
 
     # flag var is to indicate whether any new articles, in which case the TF-IDF values would need updating 
@@ -107,10 +142,10 @@ def start_crawl(domain, n):
         article = Article.query.filter_by(url=i).first()
         if not article:
             flag = True
-            cefr = cefr_calc.cefr_score(article_dict[i]["content"])
+            cefr = cefr_calc.cefr_score(article_dict[i]["content"][:600])
             # print(cefr)
-            add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"],
-                        author=article_dict[i]["author"], published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i, cefr=cefr)
+            add_to_db(Article, title=article_dict[i]["title"], text=article_dict[i]["content"], author=article_dict[i]["author"], domain=domain, 
+                        published=article_dict[i]["published"] if article_dict[i]['published'] else None, url=i, cefr=cefr)
         else:
             print(f"{article} already in DB.")
 
@@ -157,39 +192,6 @@ def apply_filters(req):
         article_objs = article_objs.order_by(*ordering)
 
     return article_objs.all()
-
-def update():
-    global C
-    print("update started...")
-    start = time.perf_counter()
-    C = update_tfidf()
-    update_data_file()
-    finish = time.perf_counter()
-    print(f"Successfully updated in {round(finish-start,2)} second(s)")   
-
-
-@app.before_first_request
-def before_first_request():
-
-    if not db.session.query(Article).first():
-        print('Empty DB.')
-        upload_dataset_toDB("application/data")
-        
-    # attempts to open data_file.pkl that contains Corpus data
-    try:
-        with open('data_file.pkl', 'rb') as f:
-            data = pickle.load(f)
-            C.num_docs = data["num_docs"]
-            C.doc_ids = data["doc_ids"]
-            C.vocab = data["vocab"]
-            C.len_vocab = data["len_vocab"]
-            C.tf_idf = data["tf_idf"]
-
-    # if file doesn't exist, upload the dataset to the database, calc tf_idf and update data file
-    except FileNotFoundError:
-        print("File not found.")
-        update_tfidf()
-        update_data_file()
 
 
 @app.route('/', methods=['get', 'post'])

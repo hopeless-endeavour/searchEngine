@@ -19,5 +19,4 @@ def create_app():
         # create DB tables
         db.create_all()
         
-
         return app
