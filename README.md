@@ -9,9 +9,9 @@ Set up for windows machines
 
 ```
 $ pip install -r requirements.txt
-(venv) $ set FLASK_APP=run.py
-(venv) $ cd searchengine
-(venv) $ flask run
+$ set FLASK_APP=run.py
+$ cd searchengine
+$ flask run
 
 ```
 
@@ -19,8 +19,8 @@ Set up for apple machines
 
 ```
 $ pip install -r requirements.txt
-(venv) $ export FLASK_APP=run.py
-(venv) $ cd searchengine
-(venv) $ flask run
+$ export FLASK_APP=run.py
+$ cd searchengine
+$ flask run
 
 ```
