@@ -1,9 +1,6 @@
 # French News Search Engine
 Search Engine for French articles/websites/blogs etc.
 
-![screenshot](screenshot.png)
-
-
 ## Set Up
 Set up for windows machines
 
